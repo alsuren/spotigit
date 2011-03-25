@@ -1,10 +1,10 @@
-TARGET=spshell
+TARGET=git-spot
 LDLIBS += -lreadline -lpthread -lrt
 CFLAGs += -Werror
 
 include ../common.mk
 
-$(TARGET): spshell.o spshell_posix.o appkey.o cmd.o browse.o search.o toplist.o inbox.o star.o social.o playlist.o
+$(TARGET): git-spot.o git-spot-posix.o appkey.o cmd.o browse.o search.o toplist.o inbox.o star.o social.o playlist.o
 	$(CC) $(CFLAGS) $(LDFLAGS) $(LDLIBS) $^ -o $@
 ifdef DEBUG
 ifeq ($(shell uname),Darwin)

@@ -38,7 +38,7 @@ extern sp_session *g_session;
 
 extern void (*metadata_updated_fn)(void);
 
-extern int spshell_init(const char *username, const char *password);
+extern int git_spot_init(const char *username, const char *password);
 
 extern void notify_main_thread(sp_session *session);
 

@@ -21,7 +21,7 @@
  *
  */
 
-#include "spshell.h"
+#include "git-spot.h"
 
 sp_session *g_session;
 void (*metadata_updated_fn)(void);
@@ -121,7 +121,7 @@ static sp_session_callbacks callbacks = {
 /**
  *
  */
-int spshell_init(const char *username, const char *password)
+int git_spot_init(const char *username, const char *password)
 {
 	sp_session_config config;
 	sp_error error;
@@ -155,7 +155,7 @@ int spshell_init(const char *username, const char *password)
 
 	// This identifies the application using some
 	// free-text string [1, 255] characters.
-	config.user_agent = "spshell";
+	config.user_agent = "git-spot";
 
 	// Register the callbacks.
 	config.callbacks = &callbacks;

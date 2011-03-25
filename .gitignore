@@ -1,3 +1,5 @@
 appkey.c
 *.o
 tmp
+/src/git-spot
+.*.swp

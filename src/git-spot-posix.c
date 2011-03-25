@@ -30,7 +30,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
-#include "spshell.h"
+#include "git-spot.h"
 #include "cmd.h"
 
 /// Set when libspotify want to process events
@@ -128,7 +128,7 @@ int main(int argc, char **argv)
 	pthread_cond_init(&notify_cond, NULL);
 	pthread_cond_init(&prompt_cond, NULL);
 
-	if ((r = spshell_init(username, password)) != 0)
+	if ((r = git_spot_init(username, password)) != 0)
 		exit(r);
 
 	pthread_mutex_lock(&notify_mutex);

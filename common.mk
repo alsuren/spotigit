@@ -48,4 +48,4 @@ CFLAGS += -Wall
 vpath %.c ../
 
 clean:
-	rm -f *.o *~ $(TARGET)
+	rm -f *.o *~ $(TARGET) && rm -rf tmp

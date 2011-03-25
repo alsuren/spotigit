@@ -23,7 +23,7 @@
 
 #include <string.h>
 
-#include "spshell.h"
+#include "git-spot.h"
 #include "cmd.h"
 
 static int subscriptions_updated;

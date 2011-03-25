@@ -21,7 +21,7 @@
  *
  */
 
-#include "spshell.h"
+#include "git-spot.h"
 #include "cmd.h"
 
 static const char *relationtypes[] = {
