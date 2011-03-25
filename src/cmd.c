@@ -38,6 +38,7 @@ struct {
 } commands[] = {
 	{ "logout",     cmd_logout,     "Logout and exit app" },
 	{ "exit",       cmd_logout,     "Logout and exit app" },
+	{ "quit",       cmd_logout,     "Logout and exit app" },
 	{ "browse",     cmd_browse,     "Browse a Spotify URI" },
 	{ "search",     cmd_search,     "Search" },
 	{ "whatsnew",   cmd_whatsnew,   "List new albums" },
@@ -50,6 +51,8 @@ struct {
 	{ "unstar",     cmd_unstar,     "Unstar a track" },
 	{ "starred",    cmd_starred,    "List all starred tracks" },
 	{ "friends",    cmd_friends,    "List all your friends" },
+	{ "save",       cmd_save,       "Save playlist hierarchy to filesystem" },
+	{ "load",       cmd_load,       "Load playlist hierarchy from filesystem" },
 	{ "playlists",  cmd_playlists,  "List playlists" },
 	{ "playlist",   cmd_playlist,   "List playlist contents" },
 	{ "set_autolink", cmd_set_autolink, "Set autolinking state" },

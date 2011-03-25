@@ -45,6 +45,9 @@ extern int cmd_starred(int argc, char **argv);
 extern int cmd_inbox(int argc, char **argv);
 extern int cmd_friends(int argc, char **argv);
 
+extern int cmd_save(int argc, char **argv);
+extern int cmd_load(int argc, char **argv);
+
 extern int cmd_playlists(int argc, char **argv);
 extern int cmd_playlist(int argc, char **argv);
 extern int cmd_set_autolink(int argc, char **argv);
