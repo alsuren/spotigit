@@ -21,7 +21,11 @@
  *
  */
 
+#define _GNU_SOURCE
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "git-spot.h"
 #include "cmd.h"
@@ -79,6 +83,7 @@ static void container_context_start_call(container_context *ctx)
 static void container_context_finish_call(container_context *ctx)
 {
   ctx->finished_calls ++;
+  printf("%d of %d calls finished.\n", ctx->finished_calls, ctx->started_calls);
   if(ctx->finished_calls == ctx->started_calls)
     cmd_save_finally(ctx);
 }
@@ -153,6 +158,7 @@ typedef struct {
   char *directory;
   sg_callback cb;
   void *user_data;
+  sp_playlist_callbacks *callbacks;
 } playlist_data;
 
 static playlist_data *playlist_data_new(sp_playlist *playlist,
@@ -166,13 +172,17 @@ static playlist_data *playlist_data_new(sp_playlist *playlist,
   data->directory = strdup(directory);
   data->cb = cb;
   data->user_data = user_data;
+  data->callbacks = malloc(sizeof(sp_playlist_callbacks));
+  memset(data->callbacks, 0, sizeof(sp_playlist_callbacks));
 
   return data;
 }
 
 static void playlist_data_free(playlist_data *data)
 {
+  sp_playlist_remove_callbacks(data->playlist, data->callbacks, data);
   free(data->directory);
+  free(data->callbacks);
   free(data);
 }
 
@@ -183,14 +193,88 @@ static void save_playlist_finally(playlist_data *data)
   playlist_data_free(data);
 }
 
+static void actually_save_playlist(playlist_data *data)
+{
+  int i;
+  char *filename = strdup(sp_playlist_name(data->playlist));
+  char *c;
+  FILE *output;
+
+  printf("Playlist '%s' ready.\n", sp_playlist_name(data->playlist));
+
+  for(c=filename; *c != 0; c++)
+    {
+      if(strchr("/\\. \t+$'\"", *c) != NULL)
+        *c = '_';
+    }
+  output = fopen(filename, "w+");
+  free(filename);
+
+  fprintf(output, "{'playlist_name': '%s', 'songs': [\n",
+      sp_playlist_name(data->playlist));
+
+  for(i=0; i<sp_playlist_num_tracks(data->playlist); i++)
+    {
+      sp_track *track = sp_playlist_track(data->playlist, i);
+      sp_link *link = sp_link_create_from_track(track, 0);
+      int j = 0;
+      char link_str[100];
+      char *artists_str = NULL;
+      sp_album *album;
+      const char *album_str = NULL;
+
+      if(!sp_link_as_string(link, link_str, 100))
+        printf("WARNING: sp_link_as_string failed.\n");
+
+      for(j=0; j < sp_track_num_artists(track); j++)
+        {
+          char *new_artists_str = NULL;
+          sp_artist *artist = sp_track_artist(track, j);
+          if (-1 == asprintf(&new_artists_str, "%s, '%s'",
+              artists_str, sp_artist_name(artist)))
+            {
+              printf("WARNING: asprinf failed.\n");
+              break;
+            }
+          free(artists_str);
+          artists_str = new_artists_str;
+        }
+      if (artists_str == NULL)
+        artists_str = "(null), 'Dunno yet.'";
+
+      album = sp_track_album(track);
+      if(album != NULL && sp_album_is_loaded(album))
+        album_str = sp_album_name(album);
+      else
+        album_str = "Dunno yet.";
+
+      fprintf(output, "{'name': '%s', 'artists': [%s], 'album': '%s', "
+          "'duration': %d, 'link': '%s'},\n",
+          sp_track_name(track), artists_str + 8 /* strip off "(null), "*/,
+          album_str, sp_track_duration(track), link_str);
+    }
+
+  fprintf(output, "]}\n");
+  fclose(output);
+  save_playlist_finally(data);
+}
+
+static void playlist_state_changed_cb(sp_playlist *pl, void *userdata)
+{
+  playlist_data *data = userdata;
+  if (sp_playlist_is_loaded(data->playlist))
+    actually_save_playlist(data);
+}
+
 static void save_playlist_async(sp_playlist *playlist,
     const char *directory,
     sg_callback cb,
     void *user_data)
 {
   playlist_data *data = playlist_data_new(playlist, directory, cb, user_data);
+  data->callbacks->playlist_state_changed = playlist_state_changed_cb;
 
-  save_playlist_finally(data);
+  sp_playlist_add_callbacks(data->playlist, data->callbacks, data);
 }
 
 
