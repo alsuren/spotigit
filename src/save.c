@@ -44,7 +44,7 @@ static char *safe_filename (const char *str)
   char *filename = strdup(str);
   char *c;
 
-  for(c=filename; *c != 0; c++)
+  for(c = filename; *c != 0; c++)
     {
       if(strchr("/\\. \t+$'\"", *c) != NULL)
         *c = '_';
