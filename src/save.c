@@ -373,7 +373,7 @@ static void actually_save_playlist(playlist_data *data)
   char *playlist_http_link = sg_link_dup_http_string(playlist_link);
   char *playlist_uri_link = sg_link_dup_string(playlist_link);
 
-  asprintf(&filename, "%s/%s.json", data->directory, basename);
+  asprintf(&filename, "%s/%s--%s.json", data->directory, basename, playlist_uri_link);
 
   printf("Playlist '%s' ready.\n", sp_playlist_name(data->playlist));
 
