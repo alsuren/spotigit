@@ -31,7 +31,7 @@
  */
 static void post_usage(void)
 {
-	fprintf(stderr, "Usage: post <recipient> <message> [<track-uri> ...]\n");
+  fprintf(stderr, "Usage: post <recipient> <message> [<track-uri> ...]\n");
 }
 
 
@@ -43,8 +43,8 @@ static void post_usage(void)
  */
 static void inbox_post_completed(sp_inbox *result, void *userdata)
 {
-	fprintf(stderr, "Inbox post result: %s\n", sp_error_message(sp_inbox_error(result)));
-	cmd_done();
+  fprintf(stderr, "Inbox post result: %s\n", sp_error_message(sp_inbox_error(result)));
+  cmd_done();
 
 }
 
@@ -53,52 +53,52 @@ static void inbox_post_completed(sp_inbox *result, void *userdata)
  */
 int cmd_post(int argc, char **argv)
 {
-	int num_tracks, i;
-	sp_track **tracks;
-	sp_link *link;
-	sp_inbox *req;
+  int num_tracks, i;
+  sp_track **tracks;
+  sp_link *link;
+  sp_inbox *req;
 
-	if (argc < 3) {
-		post_usage();
-		return -1;
-	}
+  if (argc < 3) {
+    post_usage();
+    return -1;
+  }
 
-	if (argc == 3) {
-		// No arguments, rickroll recipient
-		tracks = malloc(sizeof(sp_track *));
-		link = sp_link_create_from_string("spotify:track:6JEK0CvvjDjjMUBFoXShNZ");
-		sp_track_add_ref(tracks[0] = sp_link_as_track(link));
-		sp_link_release(link);
-		num_tracks = 1;
-	} else {
-		tracks = malloc(sizeof(sp_track *) * (argc - 3));
-		num_tracks = 0;
-		for(i = 3; i < argc; i++) {
-			link = sp_link_create_from_string(argv[i]);
-			if(link == NULL || !(sp_link_type(link) == SP_LINKTYPE_TRACK || sp_link_type(link) == SP_LINKTYPE_LOCALTRACK))
-				continue;
-			sp_track_add_ref(tracks[num_tracks++] = sp_link_as_track(link));
-			sp_link_release(link);
-		}
-	}
+  if (argc == 3) {
+    // No arguments, rickroll recipient
+    tracks = malloc(sizeof(sp_track *));
+    link = sp_link_create_from_string("spotify:track:6JEK0CvvjDjjMUBFoXShNZ");
+    sp_track_add_ref(tracks[0] = sp_link_as_track(link));
+    sp_link_release(link);
+    num_tracks = 1;
+  } else {
+    tracks = malloc(sizeof(sp_track *) * (argc - 3));
+    num_tracks = 0;
+    for(i = 3; i < argc; i++) {
+      link = sp_link_create_from_string(argv[i]);
+      if(link == NULL || !(sp_link_type(link) == SP_LINKTYPE_TRACK || sp_link_type(link) == SP_LINKTYPE_LOCALTRACK))
+        continue;
+      sp_track_add_ref(tracks[num_tracks++] = sp_link_as_track(link));
+      sp_link_release(link);
+    }
+  }
 
-	if(num_tracks == 0) {
-		fprintf(stderr, "No valid tracks?\n");
-		return -1;
-	}
+  if(num_tracks == 0) {
+    fprintf(stderr, "No valid tracks?\n");
+    return -1;
+  }
 
-	req = sp_inbox_post_tracks(g_session, argv[1], tracks, num_tracks,  argv[2], inbox_post_completed, NULL);
+  req = sp_inbox_post_tracks(g_session, argv[1], tracks, num_tracks,  argv[2], inbox_post_completed, NULL);
 
-	for(i = 0; i < num_tracks; i++)
-		sp_track_release(tracks[i]);
-	free(tracks);
+  for(i = 0; i < num_tracks; i++)
+    sp_track_release(tracks[i]);
+  free(tracks);
 
-	if(req == NULL) {
-		fprintf(stderr, "inbox post failed\n");
-		return -1;
-	}
+  if(req == NULL) {
+    fprintf(stderr, "inbox post failed\n");
+    return -1;
+  }
 
-	return 0;
+  return 0;
 }
 
 
@@ -108,12 +108,12 @@ int cmd_post(int argc, char **argv)
  */
 int cmd_inbox(int argc, char **argv)
 {
-	sp_playlist *inbox;
-	inbox = sp_session_inbox_create(g_session);
-	if (!inbox) {
-		printf("Inbox not loaded\n");
-		return -1;
-	}
-	browse_playlist(inbox);
-	return 0;
+  sp_playlist *inbox;
+  inbox = sp_session_inbox_create(g_session);
+  if (!inbox) {
+    printf("Inbox not loaded\n");
+    return -1;
+  }
+  browse_playlist(inbox);
+  return 0;
 }

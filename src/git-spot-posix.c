@@ -55,9 +55,9 @@ extern int is_logged_out;
  */
 static void trim(char *buf)
 {
-	size_t l = strlen(buf);
-	while(l > 0 && buf[l - 1] < 32)
-		buf[--l] = 0;
+  size_t l = strlen(buf);
+  while(l > 0 && buf[l - 1] < 32)
+    buf[--l] = 0;
 }
 
 
@@ -66,106 +66,106 @@ static void trim(char *buf)
  */
 int main(int argc, char **argv)
 {
-	const char *username = NULL;
-	const char *password = NULL;
-	int cmdargc;
-	char **cmdargv = NULL;
-	char username_buf[256];
-	int r;
-	int next_timeout = 0;
-	int opt;
+  const char *username = NULL;
+  const char *password = NULL;
+  int cmdargc;
+  char **cmdargv = NULL;
+  char username_buf[256];
+  int r;
+  int next_timeout = 0;
+  int opt;
 
-	while ((opt = getopt(argc, argv, "u:p:")) != EOF) {
-		switch (opt) {
-		case 'u':
-			username = optarg;
-			break;
+  while ((opt = getopt(argc, argv, "u:p:")) != EOF) {
+    switch (opt) {
+    case 'u':
+      username = optarg;
+      break;
 
-		case 'p':
-			password = optarg;
-			break;
+    case 'p':
+      password = optarg;
+      break;
 
-		default:
-			exit(1);
-		}
-	}
+    default:
+      exit(1);
+    }
+  }
 
-	if (optind >= argc){
-		fprintf(stderr, "Usage: git-spot [options] command [args]");
-		exit(1);
-	}
+  if (optind >= argc){
+    fprintf(stderr, "Usage: git-spot [options] command [args]");
+    exit(1);
+  }
 
-	cmdargv = argv + optind;
-	cmdargc = argc - optind;
+  cmdargv = argv + optind;
+  cmdargc = argc - optind;
 
-	if (username == NULL) {
-		printf("Username: ");
-		fflush(stdout);
-		fgets(username_buf, sizeof(username_buf), stdin);
-		trim(username_buf);
-		username = username_buf;
-	}
+  if (username == NULL) {
+    printf("Username: ");
+    fflush(stdout);
+    fgets(username_buf, sizeof(username_buf), stdin);
+    trim(username_buf);
+    username = username_buf;
+  }
 
-	if (password == NULL)
-		password = getpass("Password: ");
+  if (password == NULL)
+    password = getpass("Password: ");
 
-	pthread_mutex_init(&notify_mutex, NULL);
-	pthread_cond_init(&notify_cond, NULL);
-	pthread_cond_init(&prompt_cond, NULL);
+  pthread_mutex_init(&notify_mutex, NULL);
+  pthread_cond_init(&notify_cond, NULL);
+  pthread_cond_init(&prompt_cond, NULL);
 
-	if ((r = git_spot_init(username, password)) != 0)
-		exit(r);
+  if ((r = git_spot_init(username, password)) != 0)
+    exit(r);
 
-	pthread_mutex_lock(&notify_mutex);
+  pthread_mutex_lock(&notify_mutex);
 
-	while(!is_logged_out) {
-		// Release prompt
+  while(!is_logged_out) {
+    // Release prompt
 
-		if (next_timeout == 0) {
-			while(!notify_events && !cmdline)
-				pthread_cond_wait(&notify_cond, &notify_mutex);
-		} else {
-			struct timespec ts;
+    if (next_timeout == 0) {
+      while(!notify_events && !cmdline)
+        pthread_cond_wait(&notify_cond, &notify_mutex);
+    } else {
+      struct timespec ts;
 
 #if _POSIX_TIMERS > 0
-			clock_gettime(CLOCK_REALTIME, &ts);
+      clock_gettime(CLOCK_REALTIME, &ts);
 #else
-			struct timeval tv;
-			gettimeofday(&tv, NULL);
-			TIMEVAL_TO_TIMESPEC(&tv, &ts);
+      struct timeval tv;
+      gettimeofday(&tv, NULL);
+      TIMEVAL_TO_TIMESPEC(&tv, &ts);
 #endif
 
-			ts.tv_sec += next_timeout / 1000;
-			ts.tv_nsec += (next_timeout % 1000) * 1000000;
+      ts.tv_sec += next_timeout / 1000;
+      ts.tv_nsec += (next_timeout % 1000) * 1000000;
 
-			while(!notify_events && !cmdline) {
-				if(pthread_cond_timedwait(&notify_cond, &notify_mutex, &ts))
-					break;
-			}
-		}
+      while(!notify_events && !cmdline) {
+        if(pthread_cond_timedwait(&notify_cond, &notify_mutex, &ts))
+          break;
+      }
+    }
 
-		// Process initial command
-		if(cmdargc > 0) {
-			pthread_mutex_unlock(&notify_mutex);
-			cmd_dispatch(cmdargc, cmdargv);
-			pthread_mutex_lock(&notify_mutex);
-			cmdargc = 0;
-		}
+    // Process initial command
+    if(cmdargc > 0) {
+      pthread_mutex_unlock(&notify_mutex);
+      cmd_dispatch(cmdargc, cmdargv);
+      pthread_mutex_lock(&notify_mutex);
+      cmdargc = 0;
+    }
 
-		// Process libspotify events
-		notify_events = 0;
-		pthread_mutex_unlock(&notify_mutex);
+    // Process libspotify events
+    notify_events = 0;
+    pthread_mutex_unlock(&notify_mutex);
 
-		do {
-			sp_session_process_events(g_session, &next_timeout);
-		} while (next_timeout == 0);
+    do {
+      sp_session_process_events(g_session, &next_timeout);
+    } while (next_timeout == 0);
 
-		pthread_mutex_lock(&notify_mutex);
-	}
-	printf("Logged out\n");
-	sp_session_release(g_session);
-	printf("Exiting...\n");
-	return 0;
+    pthread_mutex_lock(&notify_mutex);
+  }
+  printf("Logged out\n");
+  sp_session_release(g_session);
+  printf("Exiting...\n");
+  return 0;
 }
 
 /**
@@ -173,9 +173,9 @@ int main(int argc, char **argv)
  */
 void cmd_done(void)
 {
-	pthread_mutex_lock(&notify_mutex);
-	pthread_cond_signal(&prompt_cond);
-	pthread_mutex_unlock(&notify_mutex);
+  pthread_mutex_lock(&notify_mutex);
+  pthread_cond_signal(&prompt_cond);
+  pthread_mutex_unlock(&notify_mutex);
 }
 
 
@@ -184,8 +184,8 @@ void cmd_done(void)
  */
 void notify_main_thread(sp_session *session)
 {
-	pthread_mutex_lock(&notify_mutex);
-	notify_events = 1;
-	pthread_cond_signal(&notify_cond);
-	pthread_mutex_unlock(&notify_mutex);
+  pthread_mutex_lock(&notify_mutex);
+  notify_events = 1;
+  pthread_cond_signal(&notify_cond);
+  pthread_mutex_unlock(&notify_mutex);
 }

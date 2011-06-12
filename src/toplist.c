@@ -31,8 +31,8 @@
  */
 static void print_album(int index, sp_album *album)
 {
-	printf("  Album %3d: \"%s\" by \"%s\"\n", index, sp_album_name(album), 
-	       sp_artist_name(sp_album_artist(album)));
+  printf("  Album %3d: \"%s\" by \"%s\"\n", index, sp_album_name(album), 
+         sp_artist_name(sp_album_artist(album)));
 }
 
 /**
@@ -40,7 +40,7 @@ static void print_album(int index, sp_album *album)
  */
 static void print_artist(int index, sp_artist *artist)
 {
-	printf("  Artist %3d: \"%s\"\n", index, sp_artist_name(artist));
+  printf("  Artist %3d: \"%s\"\n", index, sp_artist_name(artist));
 }
 
 
@@ -52,23 +52,23 @@ static void print_artist(int index, sp_artist *artist)
  */
 static void got_toplist(sp_toplistbrowse *result, void *userdata)
 {
-	int i;
+  int i;
 
-	// We print from all types. Only one of the loops will acually yield anything.
+  // We print from all types. Only one of the loops will acually yield anything.
 
-	for(i = 0; i < sp_toplistbrowse_num_artists(result); i++)
-		print_artist(i + 1, sp_toplistbrowse_artist(result, i));
+  for(i = 0; i < sp_toplistbrowse_num_artists(result); i++)
+    print_artist(i + 1, sp_toplistbrowse_artist(result, i));
 
-	for(i = 0; i < sp_toplistbrowse_num_albums(result); i++)
-		print_album(i + 1, sp_toplistbrowse_album(result, i));
+  for(i = 0; i < sp_toplistbrowse_num_albums(result); i++)
+    print_album(i + 1, sp_toplistbrowse_album(result, i));
 
-	for(i = 0; i < sp_toplistbrowse_num_tracks(result); i++) {
-		printf("%3d: ", i + 1);
-		print_track(sp_toplistbrowse_track(result, i));
-	}
+  for(i = 0; i < sp_toplistbrowse_num_tracks(result); i++) {
+    printf("%3d: ", i + 1);
+    print_track(sp_toplistbrowse_track(result, i));
+  }
 
-	sp_toplistbrowse_release(result);
-	cmd_done();
+  sp_toplistbrowse_release(result);
+  cmd_done();
 }
 
 
@@ -78,7 +78,7 @@ static void got_toplist(sp_toplistbrowse *result, void *userdata)
  */
 static void toplist_usage(void)
 {
-	fprintf(stderr, "Usage: toplist (tracks | albums | artists) (global | region <countrycode> | user)\n");
+  fprintf(stderr, "Usage: toplist (tracks | albums | artists) (global | region <countrycode> | user)\n");
 }
 
 /**
@@ -86,42 +86,42 @@ static void toplist_usage(void)
  */
 int cmd_toplist(int argc, char **argv)
 {
-	sp_toplisttype type;
-	sp_toplistregion region;
+  sp_toplisttype type;
+  sp_toplistregion region;
 
-	if(argc < 3) {
-		toplist_usage();
-		return -1;
-	}
+  if(argc < 3) {
+    toplist_usage();
+    return -1;
+  }
 
-	if(!strcasecmp(argv[1], "artists"))
-		type = SP_TOPLIST_TYPE_ARTISTS;
-	else if(!strcasecmp(argv[1], "albums"))
-		type = SP_TOPLIST_TYPE_ALBUMS;
-	else if(!strcasecmp(argv[1], "tracks"))
-		type = SP_TOPLIST_TYPE_TRACKS;
-	else {
-		toplist_usage();
-		return -1;
-	}
+  if(!strcasecmp(argv[1], "artists"))
+    type = SP_TOPLIST_TYPE_ARTISTS;
+  else if(!strcasecmp(argv[1], "albums"))
+    type = SP_TOPLIST_TYPE_ALBUMS;
+  else if(!strcasecmp(argv[1], "tracks"))
+    type = SP_TOPLIST_TYPE_TRACKS;
+  else {
+    toplist_usage();
+    return -1;
+  }
 
 
-	if(!strcasecmp(argv[2], "global"))
-		region = SP_TOPLIST_REGION_EVERYWHERE;
-	else if(!strcasecmp(argv[2], "user"))
-		region = SP_TOPLIST_REGION_USER;
-	else if(!strcasecmp(argv[2], "region")) {
+  if(!strcasecmp(argv[2], "global"))
+    region = SP_TOPLIST_REGION_EVERYWHERE;
+  else if(!strcasecmp(argv[2], "user"))
+    region = SP_TOPLIST_REGION_USER;
+  else if(!strcasecmp(argv[2], "region")) {
 
-		if(argc != 4 || strlen(argv[3]) != 2) {
-			toplist_usage();
-			return -1;
-		}
-		region = SP_TOPLIST_REGION(argv[3][0], argv[3][1]);
-	} else {
-		toplist_usage();
-		return -1;
-	}
+    if(argc != 4 || strlen(argv[3]) != 2) {
+      toplist_usage();
+      return -1;
+    }
+    region = SP_TOPLIST_REGION(argv[3][0], argv[3][1]);
+  } else {
+    toplist_usage();
+    return -1;
+  }
 
-	sp_toplistbrowse_create(g_session, type, region, NULL, got_toplist, NULL);
-	return 0;
+  sp_toplistbrowse_create(g_session, type, region, NULL, got_toplist, NULL);
+  return 0;
 }

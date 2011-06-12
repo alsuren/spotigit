@@ -33,21 +33,21 @@ static int subscriptions_updated;
  */
 int cmd_update_subscriptions(int argc, char **argv)
 {
-	int i;
-	sp_playlistcontainer *pc = sp_session_playlistcontainer(g_session);
-	sp_playlist *pl;
-	subscriptions_updated = 1;
-	for (i = 0; i < sp_playlistcontainer_num_playlists(pc); ++i) {
-		switch (sp_playlistcontainer_playlist_type(pc, i)) {
-		case SP_PLAYLIST_TYPE_PLAYLIST:
-			pl = sp_playlistcontainer_playlist(pc, i);
-			sp_playlist_update_subscribers(g_session, pl);
-			break;
-		default:
-			break;
-		}
-	}
-	return 1;
+  int i;
+  sp_playlistcontainer *pc = sp_session_playlistcontainer(g_session);
+  sp_playlist *pl;
+  subscriptions_updated = 1;
+  for (i = 0; i < sp_playlistcontainer_num_playlists(pc); ++i) {
+    switch (sp_playlistcontainer_playlist_type(pc, i)) {
+    case SP_PLAYLIST_TYPE_PLAYLIST:
+      pl = sp_playlistcontainer_playlist(pc, i);
+      sp_playlist_update_subscribers(g_session, pl);
+      break;
+    default:
+      break;
+    }
+  }
+  return 1;
 }
 
 
@@ -57,44 +57,44 @@ int cmd_update_subscriptions(int argc, char **argv)
  */
 int cmd_playlists(int argc, char **argv)
 {
-	sp_playlistcontainer *pc = sp_session_playlistcontainer(g_session);
-	int i, j, level = 0;
-	sp_playlist *pl;
-	char name[200];
+  sp_playlistcontainer *pc = sp_session_playlistcontainer(g_session);
+  int i, j, level = 0;
+  sp_playlist *pl;
+  char name[200];
 
-	printf("%d entries in the container\n", sp_playlistcontainer_num_playlists(pc));
+  printf("%d entries in the container\n", sp_playlistcontainer_num_playlists(pc));
 
-	for (i = 0; i < sp_playlistcontainer_num_playlists(pc); ++i) {
-		switch (sp_playlistcontainer_playlist_type(pc, i)) {
-			case SP_PLAYLIST_TYPE_PLAYLIST:
-				printf("%d. ", i);
-				for (j = level; j; --j) printf("\t");
-				pl = sp_playlistcontainer_playlist(pc, i);
-				printf("%s", sp_playlist_name(pl));
-				if(subscriptions_updated)
-					printf(" (%d subscribers)", sp_playlist_num_subscribers(pl));
-				printf("\n");
-				break;
-			case SP_PLAYLIST_TYPE_START_FOLDER:
-				printf("%d. ", i);
-				for (j = level; j; --j) printf("\t");
-				sp_playlistcontainer_playlist_folder_name(pc, i, name, sizeof(name));
-				printf("Folder: %s with id %lu\n", name,
-					   sp_playlistcontainer_playlist_folder_id(pc, i));
-				level++;
-				break;
-			case SP_PLAYLIST_TYPE_END_FOLDER:
-				level--;
- 				printf("%d. ", i);
-				for (j = level; j; --j) printf("\t");
-				printf("End folder with id %lu\n",	sp_playlistcontainer_playlist_folder_id(pc, i));
-				break;
-			case SP_PLAYLIST_TYPE_PLACEHOLDER:
-				printf("%d. Placeholder", i);
-				break;
-		}
-	}
-	return 1;
+  for (i = 0; i < sp_playlistcontainer_num_playlists(pc); ++i) {
+    switch (sp_playlistcontainer_playlist_type(pc, i)) {
+      case SP_PLAYLIST_TYPE_PLAYLIST:
+        printf("%d. ", i);
+        for (j = level; j; --j) printf("\t");
+        pl = sp_playlistcontainer_playlist(pc, i);
+        printf("%s", sp_playlist_name(pl));
+        if(subscriptions_updated)
+          printf(" (%d subscribers)", sp_playlist_num_subscribers(pl));
+        printf("\n");
+        break;
+      case SP_PLAYLIST_TYPE_START_FOLDER:
+        printf("%d. ", i);
+        for (j = level; j; --j) printf("\t");
+        sp_playlistcontainer_playlist_folder_name(pc, i, name, sizeof(name));
+        printf("Folder: %s with id %lu\n", name,
+             sp_playlistcontainer_playlist_folder_id(pc, i));
+        level++;
+        break;
+      case SP_PLAYLIST_TYPE_END_FOLDER:
+        level--;
+         printf("%d. ", i);
+        for (j = level; j; --j) printf("\t");
+        printf("End folder with id %lu\n",  sp_playlistcontainer_playlist_folder_id(pc, i));
+        break;
+      case SP_PLAYLIST_TYPE_PLACEHOLDER:
+        printf("%d. Placeholder", i);
+        break;
+    }
+  }
+  return 1;
 }
 
 /**
@@ -102,37 +102,37 @@ int cmd_playlists(int argc, char **argv)
  */
 int cmd_playlist(int argc, char **argv)
 {
-	int index, i;
-	sp_track *track;
-	sp_playlist *playlist;
-	sp_playlistcontainer *pc = sp_session_playlistcontainer(g_session);
+  int index, i;
+  sp_track *track;
+  sp_playlist *playlist;
+  sp_playlistcontainer *pc = sp_session_playlistcontainer(g_session);
 
-	if (argc < 1) {
-		printf("playlist [playlist index]\n");
-		return 0;
-	}
+  if (argc < 1) {
+    printf("playlist [playlist index]\n");
+    return 0;
+  }
 
-	index = atoi(argv[1]);
-	if (index < 0 || index > sp_playlistcontainer_num_playlists(pc)) {
-		printf("invalid index\n");
-		return 0;
-	}
-	playlist = sp_playlistcontainer_playlist(pc, index);
-	printf("Playlist %s by %s%s%s\n",
-		   sp_playlist_name(playlist),
-		   sp_user_display_name(sp_playlist_owner(playlist)),
-		   sp_playlist_is_collaborative(playlist) ? " (collaborative)" : "",
-		   sp_playlist_has_pending_changes(playlist) ? " with pending changes" : ""
-		   );
-	for (i = 0; i < sp_playlist_num_tracks(playlist); ++i) {
-		track = sp_playlist_track(playlist, i);
-		printf("%d. %c %s%s %s\n", i,
-			   sp_track_is_starred(g_session, track) ? '*' : ' ',
-			   sp_track_is_local(g_session, track) ? "local" : "     ",
-			   sp_track_is_autolinked(g_session, track) ? "autolinked" : "          ",
-			   sp_track_name(track));
-	}
-	return 1;
+  index = atoi(argv[1]);
+  if (index < 0 || index > sp_playlistcontainer_num_playlists(pc)) {
+    printf("invalid index\n");
+    return 0;
+  }
+  playlist = sp_playlistcontainer_playlist(pc, index);
+  printf("Playlist %s by %s%s%s\n",
+       sp_playlist_name(playlist),
+       sp_user_display_name(sp_playlist_owner(playlist)),
+       sp_playlist_is_collaborative(playlist) ? " (collaborative)" : "",
+       sp_playlist_has_pending_changes(playlist) ? " with pending changes" : ""
+       );
+  for (i = 0; i < sp_playlist_num_tracks(playlist); ++i) {
+    track = sp_playlist_track(playlist, i);
+    printf("%d. %c %s%s %s\n", i,
+         sp_track_is_starred(g_session, track) ? '*' : ' ',
+         sp_track_is_local(g_session, track) ? "local" : "     ",
+         sp_track_is_autolinked(g_session, track) ? "autolinked" : "          ",
+         sp_track_name(track));
+  }
+  return 1;
 }
 
 /**
@@ -140,26 +140,26 @@ int cmd_playlist(int argc, char **argv)
  */
 int cmd_set_autolink(int argc, char **argv)
 {
-	int index; 
-	bool autolink;
-	sp_playlist *playlist;
-	sp_playlistcontainer *pc = sp_session_playlistcontainer(g_session);
+  int index; 
+  bool autolink;
+  sp_playlist *playlist;
+  sp_playlistcontainer *pc = sp_session_playlistcontainer(g_session);
 
-	if (argc < 2) {
-		printf("set autolink [playlist index] [0/1]\n");
-		return 0;
-	}
+  if (argc < 2) {
+    printf("set autolink [playlist index] [0/1]\n");
+    return 0;
+  }
 
-	index = atoi(argv[1]);
-	autolink = atoi(argv[2]);
-	if (index < 0 || index > sp_playlistcontainer_num_playlists(pc)) {
-		printf("invalid index\n");
-		return 0;
-	}
-	playlist = sp_playlistcontainer_playlist(pc, index);
-	sp_playlist_set_autolink_tracks(playlist, !!autolink);
-	printf("Set autolinking to %s on playlist %s\n", autolink ? "true": "false", sp_playlist_name(playlist));
-	return 1;
+  index = atoi(argv[1]);
+  autolink = atoi(argv[2]);
+  if (index < 0 || index > sp_playlistcontainer_num_playlists(pc)) {
+    printf("invalid index\n");
+    return 0;
+  }
+  playlist = sp_playlistcontainer_playlist(pc, index);
+  sp_playlist_set_autolink_tracks(playlist, !!autolink);
+  printf("Set autolinking to %s on playlist %s\n", autolink ? "true": "false", sp_playlist_name(playlist));
+  return 1;
 }
 
 
@@ -169,22 +169,22 @@ int cmd_set_autolink(int argc, char **argv)
  */
 int cmd_add_folder(int argc, char **argv)
 {
-	int index; 
-	const char *name;
-	sp_playlistcontainer *pc = sp_session_playlistcontainer(g_session);
+  int index; 
+  const char *name;
+  sp_playlistcontainer *pc = sp_session_playlistcontainer(g_session);
 
-	if (argc < 2) {
-		printf("addfolder [playlist index] [name]\n");
-		return 0;
-	}
+  if (argc < 2) {
+    printf("addfolder [playlist index] [name]\n");
+    return 0;
+  }
 
-	index = atoi(argv[1]);
-	name = argv[2];
+  index = atoi(argv[1]);
+  name = argv[2];
 
-	if (index < 0 || index > sp_playlistcontainer_num_playlists(pc)) {
-		printf("invalid index\n");
-		return 0;
-	}
-	sp_playlistcontainer_add_folder(pc, index, name);
-	return 1;
+  if (index < 0 || index > sp_playlistcontainer_num_playlists(pc)) {
+    printf("invalid index\n");
+    return 0;
+  }
+  sp_playlistcontainer_add_folder(pc, index, name);
+  return 1;
 }

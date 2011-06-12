@@ -32,33 +32,33 @@ static int cmd_help(int argc, char **argv);
  *
  */
 struct {
-	const char *name;
-	int (*fn)(int argc, char **argv);
-	const char *help;
+  const char *name;
+  int (*fn)(int argc, char **argv);
+  const char *help;
 } commands[] = {
-	{ "logout",     cmd_logout,     "Logout and exit app" },
-	{ "exit",       cmd_logout,     "Logout and exit app" },
-	{ "quit",       cmd_logout,     "Logout and exit app" },
-	{ "browse",     cmd_browse,     "Browse a Spotify URI" },
-	{ "search",     cmd_search,     "Search" },
-	{ "whatsnew",   cmd_whatsnew,   "List new albums" },
-	{ "radio",      cmd_radio,      "Radio query" },
-	{ "toplist",    cmd_toplist,    "Browse toplists" },
-	{ "post",       cmd_post,       "Post track to a user's inbox" },
-	{ "inbox",      cmd_inbox,      "View inbox" },
-	{ "help",       cmd_help,       "This help" },
-	{ "star",       cmd_star,       "Star a track" },
-	{ "unstar",     cmd_unstar,     "Unstar a track" },
-	{ "starred",    cmd_starred,    "List all starred tracks" },
-	{ "friends",    cmd_friends,    "List all your friends" },
-	{ "save",       cmd_save,       "Save playlist hierarchy to filesystem" },
-	{ "load",       cmd_load,       "Load playlist hierarchy from filesystem" },
-	{ "playlists",  cmd_playlists,  "List playlists" },
-	{ "playlist",   cmd_playlist,   "List playlist contents" },
-	{ "set_autolink", cmd_set_autolink, "Set autolinking state" },
-	{ "published_playlists",  cmd_published_playlists, "List a published list and subscribe for updates" },
-	{ "add_folder", cmd_add_folder, "Add playlist folder"},
-	{ "update_subscriptions", cmd_update_subscriptions, "Update playlist subscription info"},
+  { "logout",     cmd_logout,     "Logout and exit app" },
+  { "exit",       cmd_logout,     "Logout and exit app" },
+  { "quit",       cmd_logout,     "Logout and exit app" },
+  { "browse",     cmd_browse,     "Browse a Spotify URI" },
+  { "search",     cmd_search,     "Search" },
+  { "whatsnew",   cmd_whatsnew,   "List new albums" },
+  { "radio",      cmd_radio,      "Radio query" },
+  { "toplist",    cmd_toplist,    "Browse toplists" },
+  { "post",       cmd_post,       "Post track to a user's inbox" },
+  { "inbox",      cmd_inbox,      "View inbox" },
+  { "help",       cmd_help,       "This help" },
+  { "star",       cmd_star,       "Star a track" },
+  { "unstar",     cmd_unstar,     "Unstar a track" },
+  { "starred",    cmd_starred,    "List all starred tracks" },
+  { "friends",    cmd_friends,    "List all your friends" },
+  { "save",       cmd_save,       "Save playlist hierarchy to filesystem" },
+  { "load",       cmd_load,       "Load playlist hierarchy from filesystem" },
+  { "playlists",  cmd_playlists,  "List playlists" },
+  { "playlist",   cmd_playlist,   "List playlist contents" },
+  { "set_autolink", cmd_set_autolink, "Set autolinking state" },
+  { "published_playlists",  cmd_published_playlists, "List a published list and subscribe for updates" },
+  { "add_folder", cmd_add_folder, "Add playlist folder"},
+  { "update_subscriptions", cmd_update_subscriptions, "Update playlist subscription info"},
 };
 
 
@@ -67,23 +67,23 @@ struct {
  */
 static int tokenize(char *buf, char **vec, int vsize)
 {
-	int n = 0;
-	while(1) {
-		while(*buf > 0 && *buf < 33)
-			buf++;
-		if(!*buf)
-			break;
-		vec[n++] = buf;
-		if(n == vsize)
-			break;
-		while(*buf > 32)
-			buf++;
-		if(*buf == 0)
-			break;
-		*buf = 0;
-		buf++;
-	}
-	return n;
+  int n = 0;
+  while(1) {
+    while(*buf > 0 && *buf < 33)
+      buf++;
+    if(!*buf)
+      break;
+    vec[n++] = buf;
+    if(n == vsize)
+      break;
+    while(*buf > 32)
+      buf++;
+    if(*buf == 0)
+      break;
+    *buf = 0;
+    buf++;
+  }
+  return n;
 }
 
 
@@ -92,9 +92,9 @@ static int tokenize(char *buf, char **vec, int vsize)
  */
 void cmd_exec_unparsed(char *l)
 {
-	char *vec[32];
-	int c = tokenize(l, vec, 32);
-	cmd_dispatch(c, vec);
+  char *vec[32];
+  int c = tokenize(l, vec, 32);
+  cmd_dispatch(c, vec);
 }
 
 
@@ -103,22 +103,22 @@ void cmd_exec_unparsed(char *l)
  */
 void cmd_dispatch(int argc, char **argv)
 {
-	int i;
+  int i;
 
-	if(argc < 1) {
-		cmd_done();
-		return;
-	}
+  if(argc < 1) {
+    cmd_done();
+    return;
+  }
 
-	for(i = 0; i < sizeof(commands) / sizeof(commands[0]); i++) {
-		if(!strcmp(commands[i].name, argv[0])) {
-			if(commands[i].fn(argc, argv))
-				cmd_done();
-			return;
-		}
-	}
-	printf("No such command\n");
-	cmd_done();
+  for(i = 0; i < sizeof(commands) / sizeof(commands[0]); i++) {
+    if(!strcmp(commands[i].name, argv[0])) {
+      if(commands[i].fn(argc, argv))
+        cmd_done();
+      return;
+    }
+  }
+  printf("No such command\n");
+  cmd_done();
 }
 
 /**
@@ -126,8 +126,8 @@ void cmd_dispatch(int argc, char **argv)
  */
 static int cmd_help(int argc, char **argv)
 {
-	int i;
-	for(i = 0; i < sizeof(commands) / sizeof(commands[0]); i++)
-		printf("  %-20s %s\n", commands[i].name, commands[i].help);
-	return -1;
+  int i;
+  for(i = 0; i < sizeof(commands) / sizeof(commands[0]); i++)
+    printf("  %-20s %s\n", commands[i].name, commands[i].help);
+  return -1;
 }

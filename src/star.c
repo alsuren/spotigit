@@ -29,7 +29,7 @@
  */
 static void star_usage(const char *prefix)
 {
-	fprintf(stderr, "Usage: %sstar <track-uri>\n", prefix);
+  fprintf(stderr, "Usage: %sstar <track-uri>\n", prefix);
 }
 
 
@@ -38,31 +38,31 @@ static void star_usage(const char *prefix)
  */
 static int dostar(int argc, char **argv, int set)
 {
-	sp_link *link;
-	const sp_track *track;
+  sp_link *link;
+  const sp_track *track;
 
-	if (argc != 2) {
-		star_usage(set ? "" : "un");
-		return -1;
-	}
-	
-	link = sp_link_create_from_string(argv[1]);
-	
-	if (!link) {
-		fprintf(stderr, "Not a spotify link\n");
-		return -1;
-	}
+  if (argc != 2) {
+    star_usage(set ? "" : "un");
+    return -1;
+  }
+  
+  link = sp_link_create_from_string(argv[1]);
+  
+  if (!link) {
+    fprintf(stderr, "Not a spotify link\n");
+    return -1;
+  }
 
-	if (sp_link_type(link) != SP_LINKTYPE_TRACK) {
-		fprintf(stderr, "Not a track link\n");
-		sp_link_release(link);
-		return -1;
-	}
+  if (sp_link_type(link) != SP_LINKTYPE_TRACK) {
+    fprintf(stderr, "Not a track link\n");
+    sp_link_release(link);
+    return -1;
+  }
 
-	track = sp_link_as_track(link);
-	sp_track_set_starred(g_session, &track, 1, set);
-	sp_link_release(link);
-	return -1;
+  track = sp_link_as_track(link);
+  sp_track_set_starred(g_session, &track, 1, set);
+  sp_link_release(link);
+  return -1;
 }
 
 
@@ -71,7 +71,7 @@ static int dostar(int argc, char **argv, int set)
  */
 int cmd_star(int argc, char **argv)
 {
-	return dostar(argc, argv, 1);
+  return dostar(argc, argv, 1);
 }
 
 
@@ -80,7 +80,7 @@ int cmd_star(int argc, char **argv)
  */
 int cmd_unstar(int argc, char **argv)
 {
-	return dostar(argc, argv, 0);
+  return dostar(argc, argv, 0);
 }
 
 /**
@@ -88,17 +88,17 @@ int cmd_unstar(int argc, char **argv)
  */
 int cmd_starred(int argc, char **argv)
 {
-	sp_playlist *starred;
-	if (argc > 1) {
-		starred = sp_session_starred_for_user_create(g_session, argv[1]);
-	} else {
-		starred = sp_session_starred_create(g_session);
-	}
-	if (starred) {
-		browse_playlist(starred);
-	} else {
-		printf("Starred not loaded\n");
-	}
-	
-	return 1;
+  sp_playlist *starred;
+  if (argc > 1) {
+    starred = sp_session_starred_for_user_create(g_session, argv[1]);
+  } else {
+    starred = sp_session_starred_create(g_session);
+  }
+  if (starred) {
+    browse_playlist(starred);
+  } else {
+    printf("Starred not loaded\n");
+  }
+  
+  return 1;
 }

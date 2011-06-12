@@ -25,10 +25,10 @@
 #include "cmd.h"
 
 static const char *relationtypes[] = {
-	"Unknown",
-	"No relation",
-	"Unidirectional",
-	"Bidirectional"
+  "Unknown",
+  "No relation",
+  "Unidirectional",
+  "Bidirectional"
 };
 
 /**
@@ -36,89 +36,89 @@ static const char *relationtypes[] = {
  */
 int cmd_friends(int argc, char **argv)
 {
-	int nf = sp_session_num_friends(g_session);
-	int i;
+  int nf = sp_session_num_friends(g_session);
+  int i;
 
-	for(i = 0; i < nf; i++) {
-		sp_user *u = sp_session_friend(g_session, i);
-		sp_relation_type rt = sp_user_relation_type(g_session, u);
+  for(i = 0; i < nf; i++) {
+    sp_user *u = sp_session_friend(g_session, i);
+    sp_relation_type rt = sp_user_relation_type(g_session, u);
 
-		printf("  %-20s [%s]\n", sp_user_canonical_name(u), relationtypes[rt]);
-		printf("\tSpotify displayname: %s\n", sp_user_display_name(u));
-		printf("\t           Realname: %s\n", sp_user_full_name(u));
-		printf("\t            Picture: %s\n", sp_user_picture(u));
-		printf("\n");
-	}
-	return 1;
+    printf("  %-20s [%s]\n", sp_user_canonical_name(u), relationtypes[rt]);
+    printf("\tSpotify displayname: %s\n", sp_user_display_name(u));
+    printf("\t           Realname: %s\n", sp_user_full_name(u));
+    printf("\t            Picture: %s\n", sp_user_picture(u));
+    printf("\n");
+  }
+  return 1;
 }
 
 
 static const char *getowner(sp_playlistcontainer *pc)
 {
-	return sp_user_canonical_name(sp_playlistcontainer_owner(pc));
+  return sp_user_canonical_name(sp_playlistcontainer_owner(pc));
 }
 
 void plc_pl_added(sp_playlistcontainer *pc, sp_playlist *playlist, int position, void *userdata)
 {
-	printf("playlistcontainer for user %s: pl %s added at position %d\n",
-	       getowner(pc), sp_playlist_name(playlist), position);
-	
+  printf("playlistcontainer for user %s: pl %s added at position %d\n",
+         getowner(pc), sp_playlist_name(playlist), position);
+  
 }
 void plc_pl_removed(sp_playlistcontainer *pc, sp_playlist *playlist, int position, void *userdata)
 {
-	printf("playlistcontainer for user %s: pl %s removed at position %d\n",
-	       getowner(pc), sp_playlist_name(playlist), position);
+  printf("playlistcontainer for user %s: pl %s removed at position %d\n",
+         getowner(pc), sp_playlist_name(playlist), position);
 
 }
 void plc_pl_moved(sp_playlistcontainer *pc, sp_playlist *playlist, int position, int new_position, void *userdata)
 {
-	printf("playlistcontainer for user %s: pl %s moved from %d to %d\n",
-	       getowner(pc), sp_playlist_name(playlist), position, new_position);
+  printf("playlistcontainer for user %s: pl %s moved from %d to %d\n",
+         getowner(pc), sp_playlist_name(playlist), position, new_position);
 }
 
 void plc_loaded(sp_playlistcontainer *pc, void *userdata)
 {
-	printf("playlistcontainer for user %s loaded\n", getowner(pc));
+  printf("playlistcontainer for user %s loaded\n", getowner(pc));
 }
 
 sp_playlistcontainer_callbacks plc_callbacks = {
-	plc_pl_added,
-	plc_pl_removed,
-	plc_pl_moved,
-	plc_loaded,
+  plc_pl_added,
+  plc_pl_removed,
+  plc_pl_moved,
+  plc_loaded,
 };
 
 int cmd_published_playlists(int argc, char **argv)
 {
-	const char *user = NULL;
-	int n;
-	static sp_playlistcontainer *plc;
-	sp_user *ui;
+  const char *user = NULL;
+  int n;
+  static sp_playlistcontainer *plc;
+  sp_user *ui;
 
-	if (argc > 1)
-		user = argv[1];
+  if (argc > 1)
+    user = argv[1];
 
-	if(plc != NULL) {
-		// Release any previously created playlistcontainer
-		// ie. we only subscribe to one at a time
-		sp_playlistcontainer_remove_callbacks(plc, &plc_callbacks, NULL);
-		sp_playlistcontainer_release(plc);
-	}
+  if(plc != NULL) {
+    // Release any previously created playlistcontainer
+    // ie. we only subscribe to one at a time
+    sp_playlistcontainer_remove_callbacks(plc, &plc_callbacks, NULL);
+    sp_playlistcontainer_release(plc);
+  }
 
-	plc = sp_session_publishedcontainer_for_user_create(g_session, user);
+  plc = sp_session_publishedcontainer_for_user_create(g_session, user);
 
-	ui = sp_playlistcontainer_owner(plc);
-	printf("playlistcontainer for user %s\n", ui ? sp_user_display_name(ui) : "<unknown>");
+  ui = sp_playlistcontainer_owner(plc);
+  printf("playlistcontainer for user %s\n", ui ? sp_user_display_name(ui) : "<unknown>");
 
-	sp_playlistcontainer_add_callbacks(plc, &plc_callbacks, NULL);
+  sp_playlistcontainer_add_callbacks(plc, &plc_callbacks, NULL);
 
-	for (n = sp_playlistcontainer_num_playlists(plc); n; --n) {
-		sp_playlist *pl = sp_playlistcontainer_playlist(plc, n);
-		if (pl) {
-			printf("playlist: %s\n", sp_playlist_name(pl));
-		} else {
-			printf("unknown playlist at position %d\n", n);
-		}
-	}
-	return 1;
+  for (n = sp_playlistcontainer_num_playlists(plc); n; --n) {
+    sp_playlist *pl = sp_playlistcontainer_playlist(plc, n);
+    if (pl) {
+      printf("playlist: %s\n", sp_playlist_name(pl));
+    } else {
+      printf("unknown playlist at position %d\n", n);
+    }
+  }
+  return 1;
 }
