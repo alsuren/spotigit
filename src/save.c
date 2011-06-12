@@ -26,7 +26,36 @@
 #include "git-spot.h"
 #include "cmd.h"
 
+typedef struct {
+  sp_playlistcontainer *pc;
+  int argc;
+  char **argv;
+  sp_playlistcontainer_callbacks *callbacks;
+} container_context;
+
+static container_context *container_context_new(
+    sp_playlistcontainer *pc,
+    int argc,
+    char **argv)
+{
+  container_context *ret = malloc(sizeof(container_context));
+  ret->pc = pc;
+  ret->argc = argc;
+  ret->argv = argv;
+  ret->callbacks = malloc(sizeof(sp_playlistcontainer_callbacks));
+  memset(ret->callbacks, 0, sizeof(sp_playlistcontainer_callbacks));
+  return ret;
+}
+
+static void container_context_free(container_context *ctx) {
+  sp_playlistcontainer_remove_callbacks(ctx->pc, ctx->callbacks, ctx);
+  free(ctx->callbacks);
+  free(ctx);
+}
+
 static int subscriptions_updated;
+
+static void container_loaded(sp_playlistcontainer *pc, void *userdata);
 
 /**
  *
@@ -34,10 +63,26 @@ static int subscriptions_updated;
 int cmd_save(int argc, char **argv)
 {
 	sp_playlistcontainer *pc = sp_session_playlistcontainer(g_session);
+  container_context *ctx = container_context_new(pc, argc, argv);
+  ctx->callbacks->container_loaded = container_loaded;
+
+  if (argc < 1)
+    printf("this is going to be fun\n");
+
+  sp_playlistcontainer_add_callbacks(pc, ctx->callbacks, ctx);
+  return 1;
+}
+
+static void container_loaded(sp_playlistcontainer *pc, void *userdata)
+{
+  container_context *ctx = userdata;
+  int argc = ctx->argc;
+  char **argv = ctx->argv;
 	int i, j, level = 0;
 	sp_playlist *pl;
 	char name[200];
 
+  printf("path = %s\n", argv[1]);
 	printf("%d entries in the container\n", sp_playlistcontainer_num_playlists(pc));
 
 	for (i = 0; i < sp_playlistcontainer_num_playlists(pc); ++i) {
@@ -70,7 +115,8 @@ int cmd_save(int argc, char **argv)
 				break;
 		}
 	}
-	return 1;
+  cmd_logout(argc, argv);
+  container_context_free(ctx);
 }
 
 /**
