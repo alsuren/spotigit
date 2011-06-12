@@ -107,11 +107,37 @@ static void trim(char *buf)
  */
 int main(int argc, char **argv)
 {
-	const char *username = argc > 1 ? argv[1] : NULL;
-	const char *password = argc > 2 ? argv[2] : NULL;
+	const char *username = NULL;
+	const char *password = NULL;
+	int cmdargc;
+	char **cmdargv = NULL;
 	char username_buf[256];
 	int r;
 	int next_timeout = 0;
+	int opt;
+
+	while ((opt = getopt(argc, argv, "u:p:")) != EOF) {
+		switch (opt) {
+		case 'u':
+			username = optarg;
+			break;
+
+		case 'p':
+			password = optarg;
+			break;
+
+		default:
+			exit(1);
+		}
+	}
+
+	if (optind >= argc){
+		fprintf(stderr, "Usage: git-spot [options] command [args]");
+		exit(1);
+	}
+
+	cmdargv = argv + optind;
+	cmdargc = argc - optind;
 
 	if (username == NULL) {
 		printf("Username: ");
@@ -159,15 +185,12 @@ int main(int argc, char **argv)
 			}
 		}
 
-		// Process input from prompt
-		if(cmdline) {
-			char *l = cmdline;
-			cmdline = NULL;
-		
+		// Process initial command
+		if(cmdargc > 0) {
 			pthread_mutex_unlock(&notify_mutex);
-			cmd_exec_unparsed(l);
-			free(l);
+			cmd_dispatch(cmdargc, cmdargv);
 			pthread_mutex_lock(&notify_mutex);
+			cmdargc = 0;
 		}
 
 		// Process libspotify events
