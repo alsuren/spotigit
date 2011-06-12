@@ -100,7 +100,7 @@ static void container_loaded(sp_playlistcontainer *pc, void *userdata)
 				printf("%d. ", i);
 				for (j = level; j; --j) printf("\t");
 				sp_playlistcontainer_playlist_folder_name(pc, i, name, sizeof(name));
-				printf("Folder: %s with id %llu\n", name,
+				printf("Folder: %s with id %lu\n", name,
 					   sp_playlistcontainer_playlist_folder_id(pc, i));
 				level++;
 				break;
@@ -108,7 +108,7 @@ static void container_loaded(sp_playlistcontainer *pc, void *userdata)
 				level--;
  				printf("%d. ", i);
 				for (j = level; j; --j) printf("\t");
-				printf("End folder with id %llu\n",	sp_playlistcontainer_playlist_folder_id(pc, i));
+				printf("End folder with id %lu\n",	sp_playlistcontainer_playlist_folder_id(pc, i));
 				break;
 			case SP_PLAYLIST_TYPE_PLACEHOLDER:
 				printf("%d. Placeholder", i);

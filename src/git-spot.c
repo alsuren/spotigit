@@ -23,6 +23,8 @@
 
 #include "git-spot.h"
 
+#include <string.h>
+
 sp_session *g_session;
 void (*metadata_updated_fn)(void);
 int is_logged_out;
