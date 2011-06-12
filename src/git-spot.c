@@ -63,8 +63,6 @@ static void logged_in(sp_session *session, sp_error error)
 	my_name = (sp_user_is_loaded(me) ? sp_user_display_name(me) : sp_user_canonical_name(me));
 
 	fprintf(stderr, "Logged in to Spotify as user %s\n", my_name);
-
-	start_prompt();
 }
 
 /**

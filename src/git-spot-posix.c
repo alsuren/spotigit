@@ -27,9 +27,6 @@
 #include <string.h>
 #include <sys/time.h>
 
-#include <readline/readline.h>
-#include <readline/history.h>
-
 #include "git-spot.h"
 #include "cmd.h"
 
@@ -48,47 +45,8 @@ static pthread_cond_t prompt_cond;
 /// Command line to execute
 static char *cmdline;
 
-/// 
-static int show_prompt;
-
 extern int is_logged_out;
 
-/**
- *
- */
-static void *promptloop(void *aux)
-{
-	pthread_mutex_lock(&notify_mutex);
-
-	while(1) {
-		char *l;
-
-		while(show_prompt == 0)
-			pthread_cond_wait(&prompt_cond, &notify_mutex);
-
-		pthread_mutex_unlock(&notify_mutex);
-		l = readline("> ");
-		pthread_mutex_lock(&notify_mutex);
-
-		show_prompt = 0;
-		cmdline = l;
-		pthread_cond_signal(&notify_cond);
-	}
-	return NULL;
-}
-
-
-/**
- *
- */
-void start_prompt(void)
-{
-	static pthread_t id;
-	if (id)
-		return;
-	show_prompt = 1;
-	pthread_create(&id, NULL, promptloop, NULL);
-}
 
 
 
@@ -216,7 +174,6 @@ int main(int argc, char **argv)
 void cmd_done(void)
 {
 	pthread_mutex_lock(&notify_mutex);
-	show_prompt = 1;
 	pthread_cond_signal(&prompt_cond);
 	pthread_mutex_unlock(&notify_mutex);
 }
