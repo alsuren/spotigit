@@ -451,6 +451,8 @@ static void save_playlist_async(sp_playlist *playlist,
   data->callbacks->playlist_state_changed = playlist_state_changed_cb;
 
   sp_playlist_add_callbacks(data->playlist, data->callbacks, data);
+
+  playlist_state_changed_cb(data->playlist, data);
 }
 
 
