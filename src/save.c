@@ -235,7 +235,7 @@ static void container_loaded(sp_playlistcontainer *pc, void *userdata)
   string_list *path = string_list_append(NULL, strdup(argv[1]));
 
   if(mkdir(argv[1], 0755) != 0 && errno != EEXIST)
-    printf("WARNING: mkdir('%s') failed.", argv[1]);
+    printf("WARNING: mkdir(\"%s\") failed.", argv[1]);
 
   container_context_start_call(ctx);
   printf("path = %s\n", argv[1]);
@@ -248,7 +248,7 @@ static void container_loaded(sp_playlistcontainer *pc, void *userdata)
         printf("%d. ", i);
         folder_name = string_list_join(path, "/");
         if(mkdir(folder_name, 0755) != 0 && errno != EEXIST)
-          printf("WARNING: mkdir('%s') failed.", folder_name);
+          printf("WARNING: mkdir(\"%s\") failed.", folder_name);
         pl = sp_playlistcontainer_playlist(pc, i);
         container_context_start_call(ctx);
         save_playlist_async(pl, folder_name, (sg_callback)container_context_finish_call, ctx);
@@ -269,7 +269,7 @@ static void container_loaded(sp_playlistcontainer *pc, void *userdata)
 
         folder_name = string_list_join(path, "/");
         if(mkdir(folder_name, 0755) != 0 && errno != EEXIST)
-          printf("WARNING: mkdir('%s') failed.", folder_name);
+          printf("WARNING: mkdir(\"%s\") failed.", folder_name);
         free(folder_name);
         break;
       case SP_PLAYLIST_TYPE_END_FOLDER:
@@ -330,12 +330,48 @@ static void save_playlist_finally(playlist_data *data)
   playlist_data_free(data);
 }
 
+static char *
+sg_link_dup_string(sp_link *link)
+{
+  char link_str[100];
+
+  if(!sp_link_as_string(link, link_str, 100))
+    printf("WARNING: sp_link_as_string failed.\n");
+
+  return strdup(link_str);
+}
+
+/*
+ * http://open.spotify.com/user/alsuren/playlist/1ruXh4qLoLj8GDWpSbYFsf
+ * spotify:user:alsuren:playlist:1ruXh4qLoLj8GDWpSbYFsf
+ */
+static char *
+sg_link_dup_http_string(sp_link *link)
+{
+  char link_str[100];
+  char *c;
+
+
+  if(!sp_link_as_string(link, link_str + strlen("http://open..com"), 100))
+    printf("WARNING: sp_link_as_string failed.\n");
+
+  memmove(link_str, "http://open.spotify.com", strlen("http://open.spotify.com"));
+
+  for(c = link_str + strlen("http://open.spotify.com"); *c != 0; c ++)
+    if(*c == ':')
+      *c = '/';
+  return strdup(link_str);
+}
+
 static void actually_save_playlist(playlist_data *data)
 {
   int i;
   char *basename = safe_filename(sp_playlist_name(data->playlist));
    FILE *output;
   char *filename;
+  sp_link *playlist_link = sp_link_create_from_playlist(data->playlist);
+  char *playlist_http_link = sg_link_dup_http_string(playlist_link);
+  char *playlist_uri_link = sg_link_dup_string(playlist_link);
 
   asprintf(&filename, "%s/%s.json", data->directory, basename);
 
@@ -345,8 +381,13 @@ static void actually_save_playlist(playlist_data *data)
   free(basename);
   free(filename);
 
-  fprintf(output, "{'playlist_name': '%s', 'songs': [\n",
-      sp_playlist_name(data->playlist));
+
+  fprintf(output, "{\"playlist_name\": \"%s\",\n"
+      "\"http_link\": \"%s\",\n"
+      "\"spotify_link\": \"%s\",\n"
+      "\"songs\": [\n",
+      sp_playlist_name(data->playlist),
+      playlist_http_link, playlist_uri_link);
 
   for(i=0; i<sp_playlist_num_tracks(data->playlist); i++)
     {
@@ -365,7 +406,7 @@ static void actually_save_playlist(playlist_data *data)
         {
           char *new_artists_str = NULL;
           sp_artist *artist = sp_track_artist(track, j);
-          if (-1 == asprintf(&new_artists_str, "%s, '%s'",
+          if (-1 == asprintf(&new_artists_str, "%s, \"%s\"",
               artists_str, sp_artist_name(artist)))
             {
               printf("WARNING: asprinf failed.\n");
@@ -375,7 +416,7 @@ static void actually_save_playlist(playlist_data *data)
           artists_str = new_artists_str;
         }
       if (artists_str == NULL)
-        artists_str = "(null), 'Dunno yet.'";
+        artists_str = "(null), \"Dunno yet.\"";
 
       album = sp_track_album(track);
       if(album != NULL && sp_album_is_loaded(album))
@@ -383,8 +424,8 @@ static void actually_save_playlist(playlist_data *data)
       else
         album_str = "Dunno yet.";
 
-      fprintf(output, "{'name': '%s', 'artists': [%s], 'album': '%s', "
-          "'duration': %d, 'link': '%s'},\n",
+      fprintf(output, "{\"name\": \"%s\", \"artists\": [%s], \"album\": \"%s\", "
+          "\"duration\": %d, \"link\": \"%s\"},\n",
           sp_track_name(track), artists_str + 8 /* strip off "(null), "*/,
           album_str, sp_track_duration(track), link_str);
     }
