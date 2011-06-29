@@ -37,6 +37,7 @@ typedef void (*sg_callback) (void *user_data);
 
 static void container_loaded(sp_playlistcontainer *pc, void *user_data);
 static void save_playlist_async(sp_playlist *playlist, const char *directory,
+    unsigned int prefix,
     sg_callback cb, void *user_data);
 
 static char *safe_filename (const char *str)
@@ -230,6 +231,7 @@ static void container_loaded(sp_playlistcontainer *pc, void *userdata)
   container_context *ctx = userdata;
   char **argv = ctx->argv;
   int i, j, level = 0;
+  unsigned int prefix = 0;
   sp_playlist *pl;
   char name[200];
   string_list *path = string_list_append(NULL, strdup(argv[1]));
@@ -249,9 +251,10 @@ static void container_loaded(sp_playlistcontainer *pc, void *userdata)
         folder_name = string_list_join(path, "/");
         if(mkdir(folder_name, 0755) != 0 && errno != EEXIST)
           printf("WARNING: mkdir(\"%s\") failed.", folder_name);
+        prefix ++;
         pl = sp_playlistcontainer_playlist(pc, i);
         container_context_start_call(ctx);
-        save_playlist_async(pl, folder_name, (sg_callback)container_context_finish_call, ctx);
+        save_playlist_async(pl, folder_name, prefix, (sg_callback)container_context_finish_call, ctx);
         free(folder_name);
         printf("%s", sp_playlist_name(pl));
         if(subscriptions_updated)
@@ -265,6 +268,7 @@ static void container_loaded(sp_playlistcontainer *pc, void *userdata)
         printf("Folder: %s with id %lu\n", name,
              sp_playlistcontainer_playlist_folder_id(pc, i));
         level++;
+        prefix = 0;
         path = string_list_append(path, safe_filename(name));
 
         folder_name = string_list_join(path, "/");
@@ -275,6 +279,7 @@ static void container_loaded(sp_playlistcontainer *pc, void *userdata)
       case SP_PLAYLIST_TYPE_END_FOLDER:
         path = string_list_remove_tail(path);
         level--;
+        prefix = 0;
          printf("%d. ", i);
         for (j = level; j; --j) printf("\t");
         printf("End folder with id %lu\n",  sp_playlistcontainer_playlist_folder_id(pc, i));
@@ -293,6 +298,7 @@ static void container_loaded(sp_playlistcontainer *pc, void *userdata)
 typedef struct {
   sp_playlist *playlist;
   char *directory;
+  unsigned int prefix;
   sg_callback cb;
   void *user_data;
   sp_playlist_callbacks *callbacks;
@@ -300,6 +306,7 @@ typedef struct {
 
 static playlist_data *playlist_data_new(sp_playlist *playlist,
     const char *directory,
+    unsigned int prefix,
     sg_callback cb,
     void *user_data)
 {
@@ -307,6 +314,7 @@ static playlist_data *playlist_data_new(sp_playlist *playlist,
 
   data->playlist = playlist;
   data->directory = strdup(directory);
+  data->prefix = prefix;
   data->cb = cb;
   data->user_data = user_data;
   data->callbacks = malloc(sizeof(sp_playlist_callbacks));
@@ -373,7 +381,7 @@ static void actually_save_playlist(playlist_data *data)
   char *playlist_http_link = sg_link_dup_http_string(playlist_link);
   char *playlist_uri_link = sg_link_dup_string(playlist_link);
 
-  asprintf(&filename, "%s/%s--%s.json", data->directory, basename, playlist_uri_link);
+  asprintf(&filename, "%s/%03u--%s--%s.json", data->directory, data->prefix, basename, playlist_uri_link);
 
   printf("Playlist '%s' ready.\n", sp_playlist_name(data->playlist));
 
@@ -444,12 +452,12 @@ static void playlist_state_changed_cb(sp_playlist *pl, void *userdata)
 
 static void save_playlist_async(sp_playlist *playlist,
     const char *directory,
+    unsigned int prefix,
     sg_callback cb,
     void *user_data)
 {
-  playlist_data *data = playlist_data_new(playlist, directory, cb, user_data);
+  playlist_data *data = playlist_data_new(playlist, directory, prefix, cb, user_data);
   data->callbacks->playlist_state_changed = playlist_state_changed_cb;
-
   sp_playlist_add_callbacks(data->playlist, data->callbacks, data);
 
   playlist_state_changed_cb(data->playlist, data);
