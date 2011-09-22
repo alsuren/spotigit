@@ -52,6 +52,7 @@ struct {
   { "starred",    cmd_starred,    "List all starred tracks" },
   { "friends",    cmd_friends,    "List all your friends" },
   { "save",       cmd_save,       "Save playlist hierarchy to filesystem" },
+  { "save_social",cmd_save_social,"Save all friends' playlists to disk." },
   { "load",       cmd_load,       "Load playlist hierarchy from filesystem" },
   { "playlists",  cmd_playlists,  "List playlists" },
   { "playlist",   cmd_playlist,   "List playlist contents" },

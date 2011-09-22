@@ -46,6 +46,7 @@ extern int cmd_inbox(int argc, char **argv);
 extern int cmd_friends(int argc, char **argv);
 
 extern int cmd_save(int argc, char **argv);
+extern int cmd_save_social(int argc, char **argv);
 extern int cmd_load(int argc, char **argv);
 
 extern int cmd_playlists(int argc, char **argv);

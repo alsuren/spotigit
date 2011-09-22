@@ -27,7 +27,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
-
+#include <unistd.h>
 
 
 #include "git-spot.h"
@@ -158,34 +158,51 @@ string_list_join(string_list *list, const char *sep)
   return new_string;
 }
 
-typedef struct {
+typedef struct _container_context container_context;
+
+struct _container_context {
   sp_playlistcontainer *pc;
-  int argc;
-  char **argv;
+  char *name;
   sp_playlistcontainer_callbacks *callbacks;
   int started_calls;
   int finished_calls;
-} container_context;
+  void (*finally_func) (container_context *);
+  void *user_data;
+};
 
 static container_context *container_context_new(
     sp_playlistcontainer *pc,
-    int argc,
-    char **argv)
+    const char *name,
+    void *user_data)
 {
-  container_context *ret = malloc(sizeof(container_context));
-  ret->pc = pc;
-  ret->argc = argc;
-  ret->argv = argv;
-  ret->callbacks = malloc(sizeof(sp_playlistcontainer_callbacks));
-  memset(ret->callbacks, 0, sizeof(sp_playlistcontainer_callbacks));
-  ret->started_calls = 0;
-  ret->finished_calls = 0;
-  return ret;
+  container_context *ctx = malloc(sizeof(container_context));
+  ctx->pc = pc;
+  ctx->name = strdup(name);
+  ctx->callbacks = malloc(sizeof(sp_playlistcontainer_callbacks));
+  memset(ctx->callbacks, 0, sizeof(sp_playlistcontainer_callbacks));
+  ctx->started_calls = 0;
+  ctx->finished_calls = 0;
+  ctx->user_data = user_data;
+  return ctx;
+}
+
+static void container_context_add_finally(
+    container_context *ctx,
+    void (*finally_func) (container_context *))
+{
+  ctx->finally_func = finally_func;
+
+  if (ctx->started_calls == ctx->finished_calls)
+    {
+      printf("Already finished all %d calls.\n", ctx->finished_calls);
+      finally_func(ctx);
+    }
 }
 
 static void container_context_free(container_context *ctx) {
   sp_playlistcontainer_remove_callbacks(ctx->pc, ctx->callbacks, ctx);
   free(ctx->callbacks);
+  free(ctx->name);
   free(ctx);
 }
 
@@ -193,13 +210,14 @@ static int subscriptions_updated;
 
 static void cmd_save_finally(container_context *ctx)
 {
-  cmd_logout(ctx->argc, ctx->argv);
+  cmd_save_social(0, NULL);
   container_context_free(ctx);
 }
 
-static void container_context_start_call(container_context *ctx)
+static container_context *container_context_start_call(container_context *ctx)
 {
   ctx->started_calls ++;
+  return ctx;
 }
 
 static void container_context_finish_call(container_context *ctx)
@@ -207,7 +225,12 @@ static void container_context_finish_call(container_context *ctx)
   ctx->finished_calls ++;
   printf("%d of %d calls finished.\n", ctx->finished_calls, ctx->started_calls);
   if(ctx->finished_calls == ctx->started_calls)
-    cmd_save_finally(ctx);
+    {
+      if (ctx->finally_func != NULL)
+        ctx->finally_func(ctx);
+      else
+        printf("context's finally function is NULL.");
+    }
 }
 
 /**
@@ -216,32 +239,36 @@ static void container_context_finish_call(container_context *ctx)
 int cmd_save(int argc, char **argv)
 {
   sp_playlistcontainer *pc = sp_session_playlistcontainer(g_session);
-  container_context *ctx = container_context_new(pc, argc, argv);
-  ctx->callbacks->container_loaded = container_loaded;
+  container_context *ctx = NULL;
 
   if (argc < 1)
-    printf("this is going to be fun\n");
+    ctx = container_context_new(pc, ".", NULL);
+  else
+    ctx = container_context_new(pc, argv[1], NULL);
 
-  sp_playlistcontainer_add_callbacks(pc, ctx->callbacks, ctx);
+  ctx->callbacks->container_loaded = container_loaded;
+  sp_playlistcontainer_add_callbacks(pc, ctx->callbacks,
+      container_context_start_call(ctx));
+  container_context_add_finally(ctx, cmd_save_finally);
   return 1;
 }
 
 static void container_loaded(sp_playlistcontainer *pc, void *userdata)
 {
   container_context *ctx = userdata;
-  char **argv = ctx->argv;
   int i, j, level = 0;
   unsigned int prefix = 0;
   sp_playlist *pl;
   char name[200];
-  string_list *path = string_list_append(NULL, strdup(argv[1]));
+  string_list *path = string_list_append(NULL, strdup(ctx->name));
 
-  if(mkdir(argv[1], 0755) != 0 && errno != EEXIST)
-    printf("WARNING: mkdir(\"%s\") failed.", argv[1]);
+  if(mkdir(ctx->name, 0755) != 0 && errno != EEXIST)
+    printf("WARNING: mkdir(\"%s\") failed.", ctx->name);
 
-  container_context_start_call(ctx);
-  printf("path = %s\n", argv[1]);
+  printf("path = %s\n", ctx->name);
   printf("%d entries in the container\n", sp_playlistcontainer_num_playlists(pc));
+
+  sp_session_num_friends(g_session);
 
   for (i = 0; i < sp_playlistcontainer_num_playlists(pc); ++i) {
     char *folder_name;
@@ -253,8 +280,8 @@ static void container_loaded(sp_playlistcontainer *pc, void *userdata)
           printf("WARNING: mkdir(\"%s\") failed.", folder_name);
         prefix ++;
         pl = sp_playlistcontainer_playlist(pc, i);
-        container_context_start_call(ctx);
-        save_playlist_async(pl, folder_name, prefix, (sg_callback)container_context_finish_call, ctx);
+        save_playlist_async(pl, folder_name, prefix, (sg_callback)container_context_finish_call,
+            container_context_start_call(ctx));
         free(folder_name);
         printf("%s", sp_playlist_name(pl));
         if(subscriptions_updated)
@@ -461,6 +488,86 @@ static void save_playlist_async(sp_playlist *playlist,
   sp_playlist_add_callbacks(data->playlist, data->callbacks, data);
 
   playlist_state_changed_cb(data->playlist, data);
+}
+
+typedef struct {
+  int started_calls;
+  int finished_calls;
+} save_social_context;
+
+save_social_context *save_social_context_new()
+{
+  save_social_context *ctx = malloc(sizeof(save_social_context));
+
+  ctx->started_calls = 0;
+  ctx->finished_calls = 0;
+
+  return ctx;
+}
+
+static void
+save_social_context_free(save_social_context *ctx)
+{
+  free(ctx);
+}
+
+static void save_social_finally (save_social_context *ctx)
+{
+  char *argv[2];
+  argv[0] = "";
+  argv[1] = "veemcgee";
+  // cmd_published_playlists(2, &argv);
+  cmd_logout(0, NULL);
+  save_social_context_free(ctx);
+}
+
+static save_social_context *save_social_context_start_call(
+    save_social_context *ctx)
+{
+  ctx->started_calls ++;
+  return ctx;
+}
+
+static void finish_with_user (container_context *ctx)
+{
+  save_social_context *save_ctx = ctx->user_data;
+
+  save_ctx->finished_calls ++;
+  if(save_ctx->started_calls == save_ctx->finished_calls)
+    save_social_finally(save_ctx);
+}
+/**
+ *
+ */
+int cmd_save_social(int argc, char **argv)
+{
+  int i;
+  int num_friends;
+  save_social_context *save_ctx = save_social_context_new();
+
+
+  num_friends = sp_session_num_friends(g_session);
+  printf("saving playlists for %d friends.\n", num_friends);
+  for(i = -1; i < num_friends; i++) {
+    // sp_user *user = sp_session_friend(g_session, i);
+    const char *name = "vmcgee"; // sp_user_canonical_name(user);
+    sp_playlistcontainer *pc = sp_session_publishedcontainer_for_user_create(
+        g_session, name);
+    container_context *ctx = container_context_new(pc, name,
+        save_social_context_start_call(save_ctx));
+    printf("saving playlists for %s.\n", name);
+
+    container_context_start_call(ctx);
+    ctx->callbacks->container_loaded = container_loaded;
+    sp_playlistcontainer_add_callbacks(pc, ctx->callbacks, ctx);
+
+    container_context_add_finally(ctx, finish_with_user);
+  }
+
+  if (save_ctx->started_calls == 0)
+    save_social_finally(save_ctx);
+
+  return 1;
 }
 
 

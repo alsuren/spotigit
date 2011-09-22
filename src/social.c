@@ -108,7 +108,8 @@ int cmd_published_playlists(int argc, char **argv)
   plc = sp_session_publishedcontainer_for_user_create(g_session, user);
 
   ui = sp_playlistcontainer_owner(plc);
-  printf("playlistcontainer for user %s\n", ui ? sp_user_display_name(ui) : "<unknown>");
+  printf("playlistcontainer for user %s (%s)\n", user,
+      ui ? sp_user_display_name(ui) : "<unknown>");
 
   sp_playlistcontainer_add_callbacks(plc, &plc_callbacks, NULL);
 

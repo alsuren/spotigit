@@ -1,6 +1,8 @@
 TARGET=git-spot
 LDLIBS += -lreadline -lpthread -lrt
 CFLAGs += -Werror
+CFLAGS += -ggdb3
+CFLAGS += -O0
 
 include ../common.mk
 
