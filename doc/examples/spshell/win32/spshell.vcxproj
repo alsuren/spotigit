@@ -61,7 +61,7 @@
       <CallingConvention>StdCall</CallingConvention>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>libspotify.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>spotify.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(LIBSPOTIFY)\lib;..\..\..\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
@@ -100,7 +100,9 @@
     <ClCompile Include="..\browse.c" />
     <ClCompile Include="..\cmd.c" />
     <ClCompile Include="..\inbox.c" />
+    <ClCompile Include="..\playlist.c" />
     <ClCompile Include="..\search.c" />
+    <ClCompile Include="..\social.c" />
     <ClCompile Include="..\spshell.c" />
     <ClCompile Include="..\spshell_win32.c" />
     <ClCompile Include="..\star.c" />
