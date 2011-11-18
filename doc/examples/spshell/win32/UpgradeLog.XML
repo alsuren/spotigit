@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?><?xml-stylesheet type='text/xsl' href='_UpgradeReport_Files/UpgradeReport.xslt'?><UpgradeLog>
+<Properties><Property Name="Solution" Value="spshell">
+</Property><Property Name="Solution File" Value="C:\Users\alsuren\Sources\libspotify\doc\examples\spshell\win32\spshell.sln">
+</Property><Property Name="Date" Value="20 October 2011">
+</Property><Property Name="Time" Value="14:43">
+</Property></Properties><Event ErrorLevel="0" Project="" Source="spshell.sln" Description="File successfully backed up as C:\Users\alsuren\Sources\libspotify\doc\examples\spshell\win32\spshell.sln.old">
+</Event><Event ErrorLevel="3" Project="spshell" Source="spshell.vcproj" Description="No Conversion Required">
+</Event><Event ErrorLevel="0" Project="" Source="spshell.sln" Description="Solution converted successfully">
+</Event><Event ErrorLevel="3" Project="" Source="spshell.sln" Description="Converted">
+</Event></UpgradeLog>

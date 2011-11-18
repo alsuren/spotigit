@@ -1,0 +1,23 @@
+﻿Build started 20/10/2011 15:36:25.
+     1>Project "C:\Users\alsuren\Sources\libspotify\doc\examples\spshell\win32\spshell.vcxproj" on node 2 (build target(s)).
+     1>C:\windows\Microsoft.NET\Framework\v4.0.30319\Microsoft.Common.Targets(1200,9): warning : The referenced project '..\..\..\..\core\_win32\core.2010.vcxproj' does not exist.
+     1>C:\windows\Microsoft.NET\Framework\v4.0.30319\Microsoft.Common.Targets(1200,9): warning : The referenced project '..\..\..\..\core\_win32\public_api.2010.vcxproj' does not exist.
+     1>C:\windows\Microsoft.NET\Framework\v4.0.30319\Microsoft.Common.Targets(1200,9): warning : The referenced project '..\..\..\..\util\_win32\spotify_util.2010.vcxproj' does not exist.
+     1>InitializeBuildStatus:
+         Creating "Debug\spshell.unsuccessfulbuild" because "AlwaysCreate" was specified.
+       ClCompile:
+         All outputs are up-to-date.
+       ManifestResourceCompile:
+         All outputs are up-to-date.
+       Link:
+         All outputs are up-to-date.
+       Manifest:
+         All outputs are up-to-date.
+       FinalizeBuildStatus:
+         Deleting file "Debug\spshell.unsuccessfulbuild".
+         Touching "Debug\spshell.lastbuildstate".
+     1>Done Building Project "C:\Users\alsuren\Sources\libspotify\doc\examples\spshell\win32\spshell.vcxproj" (build target(s)).
+
+Build succeeded.
+
+Time Elapsed 00:00:00.37
