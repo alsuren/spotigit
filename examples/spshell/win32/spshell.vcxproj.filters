@@ -35,7 +35,13 @@
     <ClCompile Include="..\inbox.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\playlist.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\search.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\social.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\spshell.c">
@@ -45,6 +51,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\star.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\toplist.c">
