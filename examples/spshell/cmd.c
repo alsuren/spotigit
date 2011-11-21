@@ -55,6 +55,7 @@ struct {
 	{ "friends",    cmd_friends,    "List all your friends" },
 #endif
 	{ "playlists",  cmd_playlists,  "List playlists" },
+	{ "save",  cmd_save,  "save playlists" },
 	{ "playlist",   cmd_playlist,   "List playlist contents" },
 	{ "set_autolink", cmd_set_autolink, "Set autolinking state" },
 	{ "published_playlists",  cmd_published_playlists, "List a published list and subscribe for updates" },

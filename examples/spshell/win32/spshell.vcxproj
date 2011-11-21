@@ -95,6 +95,7 @@
     <ClCompile Include="..\cmd.c" />
     <ClCompile Include="..\inbox.c" />
     <ClCompile Include="..\playlist.c" />
+    <ClCompile Include="..\save.c" />
     <ClCompile Include="..\search.c" />
     <ClCompile Include="..\social.c" />
     <ClCompile Include="..\spshell.c" />
