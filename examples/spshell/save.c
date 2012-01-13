@@ -50,7 +50,7 @@ static char *safe_filename (const char *str)
 
   for(c = filename; *c != 0; c++)
     {
-      if(strchr("/\\. \t+$'\"", *c) != NULL)
+      if(strchr("/\\. :\t+$'\"", *c) != NULL)
         *c = '_';
     }
 
@@ -394,6 +394,19 @@ sg_link_dup_string(sp_link *link)
   return _strdup(link_str);
 }
 
+static char *
+sg_link_dup_safe_string(sp_link *link)
+{
+  char link_str[100];
+  char *ret = NULL;
+
+  if(!sp_link_as_string(link, link_str, 100))
+    printf("WARNING: sp_link_as_string failed.\n");
+
+  ret = safe_filename(link_str);
+  return ret;
+}
+
 /*
  * http://open.spotify.com/user/alsuren/playlist/1ruXh4qLoLj8GDWpSbYFsf
  * spotify:user:alsuren:playlist:1ruXh4qLoLj8GDWpSbYFsf
@@ -425,15 +438,16 @@ static void actually_save_playlist(playlist_data *data)
   sp_link *playlist_link = sp_link_create_from_playlist(data->playlist);
   char *playlist_http_link = sg_link_dup_http_string(playlist_link);
   char *playlist_uri_link = sg_link_dup_string(playlist_link);
+  char *playlist_uri_safe = sg_link_dup_safe_string(playlist_link);
   const char *playlist_name;
 
-  snprintf(filename, MAX_FILENAME_LEN, "%s/%03u--%s--%s.json", data->directory, data->prefix, basename, playlist_uri_link);
+  snprintf(filename, MAX_FILENAME_LEN, "%s/%03u--%s--%s.json", data->directory, data->prefix, basename, playlist_uri_safe);
 
   printf("Playlist '%s' ready.\n", sp_playlist_name(data->playlist));
 
   output = fopen(filename, "w+");
   if (output == 0) {
-	  printf("%s is not writable.", filename);
+	  printf("%s is not writable.\n", filename);
 	  goto finally;
   }
 
@@ -492,8 +506,10 @@ static void actually_save_playlist(playlist_data *data)
 closefile:
   fclose(output);
 finally:
-
   free(basename);
+  free(playlist_http_link);
+  free(playlist_uri_link);
+  free(playlist_uri_safe);
   save_playlist_finally(data);
 }
 
