@@ -186,6 +186,7 @@ static container_context *container_context_new(
   memset(ctx->callbacks, 0, sizeof(sp_playlistcontainer_callbacks));
   ctx->started_calls = 0;
   ctx->finished_calls = 0;
+  ctx->finally_func = NULL;
   ctx->user_data = user_data;
   return ctx;
 }
@@ -230,10 +231,12 @@ static void container_context_finish_call(container_context *ctx)
   printf("%d of %d calls finished.\n", ctx->finished_calls, ctx->started_calls);
   if(ctx->finished_calls == ctx->started_calls)
     {
-      if (ctx->finally_func != NULL)
+      if (ctx->finally_func != NULL) {
         ctx->finally_func(ctx);
+	    ctx->finally_func = NULL;
+	  }
       else
-        printf("context's finally function is NULL.");
+        printf("context's finally function is NULL.\n");
     }
 }
 
