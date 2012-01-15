@@ -779,41 +779,6 @@ static void finish_with_user (container_context *ctx)
   if(save_ctx->started_calls == save_ctx->finished_calls)
     save_social_finally(save_ctx);
 }
-/**
- *
- */
-#if 0
-int cmd_save_social(int argc, char **argv)
-{
-  int i;
-  int num_friends;
-  save_social_context *save_ctx = save_social_context_new();
-
-
-  num_friends = sp_session_num_friends(g_session);
-  printf("saving playlists for %d friends.\n", num_friends);
-  for(i = -1; i < num_friends; i++) {
-    // sp_user *user = sp_session_friend(g_session, i);
-    const char *name = "vmcgee"; // sp_user_canonical_name(user);
-    sp_playlistcontainer *pc = sp_session_publishedcontainer_for_user_create(
-        g_session, name);
-    container_context *ctx = container_context_new(pc, name,
-        save_social_context_start_call(save_ctx));
-    printf("saving playlists for %s.\n", name);
-
-    container_context_start_call(ctx);
-    ctx->callbacks->container_loaded = container_loaded;
-    sp_playlistcontainer_add_callbacks(pc, ctx->callbacks, ctx);
-
-    container_context_add_finally(ctx, finish_with_user);
-  }
-
-  if (save_ctx->started_calls == 0)
-    save_social_finally(save_ctx);
-
-  return 1;
-}
-#endif
 
 /**
  *
