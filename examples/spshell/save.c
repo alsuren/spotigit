@@ -226,7 +226,11 @@ typedef struct _container_context container_context;
 
 struct _container_context {
   sp_playlistcontainer *pc;
+  container_context *parent;
+  int depth;
+  int allowable_depth;
   char *name;
+  string_queue *users;
   sp_playlistcontainer_callbacks *callbacks;
   int started_calls;
   int finished_calls;
@@ -237,11 +241,25 @@ struct _container_context {
 static container_context *container_context_new(
     sp_playlistcontainer *pc,
     const char *name,
+    container_context *parent,
     void *user_data)
 {
   container_context *ctx = malloc(sizeof(container_context));
   ctx->pc = pc;
   ctx->name = _strdup(name);
+  ctx->parent = parent;
+  if (parent != NULL)
+  {
+      ctx->users = parent->users;
+      ctx->depth = parent->depth + 1;
+      ctx->allowable_depth = parent->allowable_depth;
+  }
+  else
+  {
+      ctx->users = string_queue_new(NULL);
+      ctx->depth = 0;
+      ctx->allowable_depth = 0;
+  }
   ctx->callbacks = malloc(sizeof(sp_playlistcontainer_callbacks));
   memset(ctx->callbacks, 0, sizeof(sp_playlistcontainer_callbacks));
   ctx->started_calls = 0;
@@ -313,9 +331,11 @@ int cmd_save(int argc, char **argv)
 
   printf("cmd_save called\n");
   if (argc <= 1)
-    ctx = container_context_new(pc, ".", NULL);
+    ctx = container_context_new(pc, ".", NULL, NULL);
   else
-    ctx = container_context_new(pc, argv[1], NULL);
+    ctx = container_context_new(pc, argv[1], NULL, NULL);
+
+  ctx->allowable_depth = 1;
 
   if (sp_playlistcontainer_is_loaded(pc)) {
       container_loaded(pc, container_context_start_call(ctx));
@@ -326,6 +346,87 @@ int cmd_save(int argc, char **argv)
   }
   container_context_add_finally(ctx, cmd_save_finally);
   return 0;
+}
+
+
+static void save_subscriber_names(container_context *ctx, sp_playlist *playlist)
+{
+    sp_subscribers *subscribers = sp_playlist_subscribers(playlist);
+    unsigned int i;
+
+    sp_user *owner = sp_playlist_owner (playlist);
+    string_queue_add_to_set(ctx->users, sp_user_canonical_name(owner));
+
+    for (i = 0; i < subscribers->count; i++)
+    {
+        char *name = subscribers->subscribers[i];
+        string_queue_add_to_set(ctx->users, name);
+    }
+    sp_playlist_subscribers_free(subscribers);
+}
+
+static void child_context_finally(container_context *child_ctx)
+{
+    container_context_finish_call(child_ctx->parent);
+}
+
+static void save_users (container_context *parent_ctx)
+{
+    string_list *l;
+    char user_folder_name[MAX_FILENAME_LEN];
+
+    snprintf(user_folder_name, MAX_FILENAME_LEN, "%s/users", parent_ctx->name);
+
+    if (parent_ctx->depth >= parent_ctx->allowable_depth)
+    {
+        printf("%s: Already reached maximum allowable depth. Skipping.\n", parent_ctx->name);
+        goto finally;
+    }
+
+    if(_mkdir(user_folder_name) != 0 && errno != EEXIST)
+        printf("WARNING: mkdir(\"%s\") failed.\n", user_folder_name);
+    else if (errno == EEXIST)
+        printf("Dir \"%s\" already exists.\n", user_folder_name);
+    else
+        printf("mkdir(\"%s\") succeeded.\n", user_folder_name);
+
+    for(l = parent_ctx->users->first; l != NULL && l->data != NULL; l = l->next)
+    {
+        sp_playlistcontainer *pc = sp_session_publishedcontainer_for_user_create(
+            g_session, l->data);
+        container_context *child_ctx =  NULL;
+
+        snprintf(user_folder_name, MAX_FILENAME_LEN, "%s/users/%s", parent_ctx->name, l->data);
+
+        if (_mkdir(user_folder_name) != 0 && errno != EEXIST)
+        {
+            printf("mkdir(\"%s\") failed. Dunno why. Skipping.\n", user_folder_name);
+            continue;
+        }
+        else if (errno == EEXIST)
+        {
+            printf("Not not saving %s because the folder already exists.\n", user_folder_name);
+            //continue;
+        }
+        else
+        {
+            printf("mkdir(\"%s\") succeeded.\n", user_folder_name);
+        }
+
+        child_ctx = container_context_new(pc, user_folder_name, parent_ctx, parent_ctx);
+
+        if (sp_playlistcontainer_is_loaded(pc)) {
+            container_loaded(pc, container_context_start_call(child_ctx));
+        } else {
+            child_ctx->callbacks->container_loaded = container_loaded;
+            sp_playlistcontainer_add_callbacks(pc, child_ctx->callbacks,
+                container_context_start_call(child_ctx));
+        }
+        container_context_start_call(parent_ctx);
+        container_context_add_finally(child_ctx, child_context_finally);
+    }
+    finally:
+    container_context_finish_call(parent_ctx);
 }
 
 static void container_loaded(sp_playlistcontainer *pc, void *userdata)
@@ -364,6 +465,7 @@ static void container_loaded(sp_playlistcontainer *pc, void *userdata)
         pl = sp_playlistcontainer_playlist(pc, i);
         save_playlist_async(pl, folder_name, prefix, (sg_callback)container_context_finish_call,
             container_context_start_call(ctx));
+        save_subscriber_names(ctx, pl);
         free(folder_name);
         printf("%s", sp_playlist_name(pl));
         if(subscriptions_updated)
@@ -400,6 +502,8 @@ static void container_loaded(sp_playlistcontainer *pc, void *userdata)
         break;
     }
   }
+
+  save_users(container_context_start_call(ctx));
 
   printf("Made %d async calls.\n", ctx->started_calls -1);
   container_context_finish_call(ctx);
