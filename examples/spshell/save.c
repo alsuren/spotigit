@@ -82,11 +82,11 @@ string_list_last(string_list *list)
 }
 
 string_list *
-string_list_append(string_list *list, char *data)
+string_list_append(string_list *list, const char *data)
 {
   string_list *new_link = malloc(sizeof(string_list));
   new_link->next = NULL;
-  new_link->data = data;
+  new_link->data = strdup(data);
 
   while (list != NULL && list->next != NULL)
     list = list->next;
@@ -130,6 +130,22 @@ string_list_remove_tail(string_list *list)
   return new_tail;
 }
 
+string_list *
+string_list_remove_head(string_list *list)
+{
+  string_list *new_head;
+  if (list == NULL)
+    return NULL;
+  list = string_list_first(list);
+  new_head = list->next;
+  new_head->prev = NULL;
+  free(list->data);
+  free(list);
+
+  return new_head;
+}
+
+
 static void
 string_list_free(string_list *list)
 {
@@ -160,6 +176,50 @@ string_list_join(string_list *list, const char *sep)
   new_string = _strdup(old_string + strlen("(null)") + strlen(sep));
   free(old_string);
   return new_string;
+}
+
+typedef struct string_queue {
+    string_list *first;
+    string_list *last;
+} string_queue;
+
+static string_queue *
+string_queue_new (string_list *list)
+{
+    string_queue *ret = malloc(sizeof(string_queue));
+    ret->first = string_list_first(list);
+    ret->last = string_list_last(list);
+    return ret;
+}
+
+static void
+string_queue_free (string_queue *queue)
+{
+    string_list_free(queue->first);
+    free(queue);
+}
+
+
+
+static void string_queue_append(string_queue *queue, const char *data)
+{
+    queue->last = string_list_append(queue->last, data);
+    if (queue->first == NULL)
+        queue->first = string_list_first(queue->last);
+}
+
+static void string_queue_add_to_set(string_queue *queue, const char *data)
+{
+    string_list *l = NULL;
+
+    for (l = queue->last; l != NULL && l->data != NULL; l = l->prev)
+        if (strcmp(l->data, data) == 0)
+        {
+            printf("Not adding \"%s\" because it is already in the set.\n", data);
+            return;
+        }
+
+    string_queue_append(queue, data);
 }
 
 typedef struct _container_context container_context;
