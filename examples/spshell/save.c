@@ -318,14 +318,14 @@ int cmd_save(int argc, char **argv)
     ctx = container_context_new(pc, argv[1], NULL);
 
   if (sp_playlistcontainer_is_loaded(pc)) {
-	  container_loaded(pc, ctx);
+      container_loaded(pc, container_context_start_call(ctx));
   } else {
       ctx->callbacks->container_loaded = container_loaded;
       sp_playlistcontainer_add_callbacks(pc, ctx->callbacks,
           container_context_start_call(ctx));
   }
   container_context_add_finally(ctx, cmd_save_finally);
-  return 1;
+  return 0;
 }
 
 static void container_loaded(sp_playlistcontainer *pc, void *userdata)
