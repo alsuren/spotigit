@@ -168,7 +168,7 @@ string_list_join(string_list *list, const char *sep)
 
   for (l = string_list_first(list); l != NULL; l = l->next)
     {
-	  char tmp_string[MAX_FILENAME_LEN];
+      char tmp_string[MAX_FILENAME_LEN];
       snprintf(tmp_string, MAX_FILENAME_LEN, "%s%s%s", old_string, sep, l->data);
       free(old_string);
       old_string = _strdup(tmp_string);
@@ -259,7 +259,7 @@ static void container_context_add_finally(
 
   if (ctx->started_calls == ctx->finished_calls)
     {
-      printf("Already finished all %d calls.\n", ctx->finished_calls);
+        printf("%s: Already finished all %d calls.\n", ctx->name, ctx->finished_calls);
       finally_func(ctx);
     }
 }
@@ -293,8 +293,8 @@ static void container_context_finish_call(container_context *ctx)
     {
       if (ctx->finally_func != NULL) {
         ctx->finally_func(ctx);
-	    ctx->finally_func = NULL;
-	  }
+        ctx->finally_func = NULL;
+      }
       else
         printf("context's finally function is NULL.\n");
     }
@@ -317,9 +317,9 @@ int cmd_save(int argc, char **argv)
   if (sp_playlistcontainer_is_loaded(pc)) {
 	  container_loaded(pc, ctx);
   } else {
-	  ctx->callbacks->container_loaded = container_loaded;
-	  sp_playlistcontainer_add_callbacks(pc, ctx->callbacks,
-		  container_context_start_call(ctx));
+      ctx->callbacks->container_loaded = container_loaded;
+      sp_playlistcontainer_add_callbacks(pc, ctx->callbacks,
+          container_context_start_call(ctx));
   }
   container_context_add_finally(ctx, cmd_save_finally);
   return 1;
@@ -380,8 +380,8 @@ static void container_loaded(sp_playlistcontainer *pc, void *userdata)
         folder_name = string_list_join(path, "/");
         if(_mkdir(folder_name) != 0 && errno != EEXIST)
           printf("WARNING: mkdir(\"%s\") failed.", folder_name);
-		if(chmod(folder_name, _S_IREAD | _S_IWRITE) != 0 && errno != EEXIST)
-		  printf("WARNING: chmod(\"%s\") failed.", folder_name);
+        if(chmod(folder_name, _S_IREAD | _S_IWRITE) != 0 && errno != EEXIST)
+          printf("WARNING: chmod(\"%s\") failed.", folder_name);
         free(folder_name);
         break;
       case SP_PLAYLIST_TYPE_END_FOLDER:
@@ -510,8 +510,8 @@ static void actually_save_playlist(playlist_data *data)
 
   output = fopen(filename, "w+");
   if (output == 0) {
-	  printf("%s is not writable.\n", filename);
-	  goto finally;
+      printf("%s is not writable.\n", filename);
+      goto finally;
   }
 
   playlist_name = sp_playlist_name(data->playlist);
