@@ -353,8 +353,15 @@ static void save_subscriber_names(container_context *ctx, sp_playlist *playlist)
 {
     sp_subscribers *subscribers = sp_playlist_subscribers(playlist);
     unsigned int i;
+    sp_user *owner = NULL;
 
-    sp_user *owner = sp_playlist_owner (playlist);
+    if (ctx->depth >= ctx->allowable_depth)
+    {
+        printf("%s: Already reached maximum allowable depth. Skipping.\n", ctx->name);
+        goto finally;
+    }
+
+    owner = sp_playlist_owner (playlist);
     string_queue_add_to_set(ctx->users, sp_user_canonical_name(owner));
 
     for (i = 0; i < subscribers->count; i++)
@@ -362,6 +369,7 @@ static void save_subscriber_names(container_context *ctx, sp_playlist *playlist)
         char *name = subscribers->subscribers[i];
         string_queue_add_to_set(ctx->users, name);
     }
+    finally:
     sp_playlist_subscribers_free(subscribers);
 }
 
