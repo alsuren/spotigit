@@ -277,18 +277,21 @@ static void cmd_save_finally(container_context *ctx)
 {
   //cmd_save_social(0, NULL);
   container_context_free(ctx);
+  cmd_done();
 }
 
 static container_context *container_context_start_call(container_context *ctx)
 {
   ctx->started_calls ++;
+  
+    printf("%s: started call %d.\n", ctx->name, ctx->started_calls);
   return ctx;
 }
 
 static void container_context_finish_call(container_context *ctx)
 {
   ctx->finished_calls ++;
-  printf("%d of %d calls finished.\n", ctx->finished_calls, ctx->started_calls);
+  printf("%s: %d of %d calls finished.\n", ctx->name, ctx->finished_calls, ctx->started_calls);
   if(ctx->finished_calls == ctx->started_calls)
     {
       if (ctx->finally_func != NULL) {
@@ -296,7 +299,7 @@ static void container_context_finish_call(container_context *ctx)
         ctx->finally_func = NULL;
       }
       else
-        printf("context's finally function is NULL.\n");
+        printf("%s: context's finally function is NULL.\n", ctx->name);
     }
 }
 
