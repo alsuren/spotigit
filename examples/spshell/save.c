@@ -373,8 +373,16 @@ static void save_subscriber_names(container_context *ctx, sp_playlist *playlist)
     sp_playlist_subscribers_free(subscribers);
 }
 
+static void save_next_user(container_context *parent_ctx, string_list *next);
+
 static void child_context_finally(container_context *child_ctx)
 {
+    string_list *next = child_ctx->user_data;
+
+    if (next != NULL)
+        save_next_user(container_context_start_call(child_ctx->parent),
+            next);
+
     container_context_finish_call(child_ctx->parent);
 }
 
@@ -385,9 +393,9 @@ static void save_users (container_context *parent_ctx)
 
     snprintf(user_folder_name, MAX_FILENAME_LEN, "%s/users", parent_ctx->name);
 
-    if (parent_ctx->depth >= parent_ctx->allowable_depth)
+    if (parent_ctx->depth > 0)
     {
-        printf("%s: Already reached maximum allowable depth. Skipping.\n", parent_ctx->name);
+        printf("%s: Save job can only be started by top-level context. Skipping.\n");
         goto finally;
     }
 
@@ -398,42 +406,56 @@ static void save_users (container_context *parent_ctx)
     else
         printf("mkdir(\"%s\") succeeded.\n", user_folder_name);
 
-    for(l = parent_ctx->users->first; l != NULL && l->data != NULL; l = l->next)
-    {
-        sp_playlistcontainer *pc = sp_session_publishedcontainer_for_user_create(
-            g_session, l->data);
-        container_context *child_ctx =  NULL;
+    save_next_user(container_context_start_call(parent_ctx),
+        parent_ctx->users->first);
 
-        snprintf(user_folder_name, MAX_FILENAME_LEN, "%s/users/%s", parent_ctx->name, l->data);
-
-        if (_mkdir(user_folder_name) != 0 && errno != EEXIST)
-        {
-            printf("mkdir(\"%s\") failed. Dunno why. Skipping.\n", user_folder_name);
-            continue;
-        }
-        else if (errno == EEXIST)
-        {
-            printf("Not not saving %s because the folder already exists.\n", user_folder_name);
-            //continue;
-        }
-        else
-        {
-            printf("mkdir(\"%s\") succeeded.\n", user_folder_name);
-        }
-
-        child_ctx = container_context_new(pc, user_folder_name, parent_ctx, parent_ctx);
-
-        if (sp_playlistcontainer_is_loaded(pc)) {
-            container_loaded(pc, container_context_start_call(child_ctx));
-        } else {
-            child_ctx->callbacks->container_loaded = container_loaded;
-            sp_playlistcontainer_add_callbacks(pc, child_ctx->callbacks,
-                container_context_start_call(child_ctx));
-        }
-        container_context_start_call(parent_ctx);
-        container_context_add_finally(child_ctx, child_context_finally);
-    }
     finally:
+    container_context_finish_call(parent_ctx);
+}
+
+static void save_next_user(container_context *parent_ctx, string_list *next)
+{
+    string_list *l = next;
+    char user_folder_name[MAX_FILENAME_LEN];
+
+    sp_playlistcontainer *pc = sp_session_publishedcontainer_for_user_create(
+        g_session, l->data);
+    container_context *child_ctx =  NULL;
+
+    snprintf(user_folder_name, MAX_FILENAME_LEN, "%s/users/%s", parent_ctx->name, l->data);
+
+    if (_mkdir(user_folder_name) != 0 && errno != EEXIST)
+    {
+        printf("mkdir(\"%s\") failed. Dunno why. Skipping.\n", user_folder_name);
+        goto finally;
+    }
+    else if (errno == EEXIST)
+    {
+        printf("Not not saving %s because the folder already exists.\n", user_folder_name);
+        //continue;
+    }
+    else
+    {
+        printf("mkdir(\"%s\") succeeded.\n", user_folder_name);
+    }
+
+    child_ctx = container_context_new(pc, user_folder_name, parent_ctx, l->next);
+
+    if (sp_playlistcontainer_is_loaded(pc)) {
+        container_loaded(pc, container_context_start_call(child_ctx));
+    } else {
+        child_ctx->callbacks->container_loaded = container_loaded;
+        sp_playlistcontainer_add_callbacks(pc, child_ctx->callbacks,
+            container_context_start_call(child_ctx));
+    }
+    container_context_add_finally(child_ctx, child_context_finally);
+    return;
+
+    finally:
+
+    if (next->next != NULL)
+        save_next_user(container_context_start_call(child_ctx->parent),
+            next->next);
     container_context_finish_call(parent_ctx);
 }
 
