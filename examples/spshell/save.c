@@ -208,7 +208,7 @@ static void string_queue_append(string_queue *queue, const char *data)
         queue->first = string_list_first(queue->last);
 }
 
-static void string_queue_add_to_set(string_queue *queue, const char *data)
+static bool string_queue_add_to_set(string_queue *queue, const char *data)
 {
     string_list *l = NULL;
 
@@ -216,10 +216,11 @@ static void string_queue_add_to_set(string_queue *queue, const char *data)
         if (strcmp(l->data, data) == 0)
         {
             printf("Not adding \"%s\" because it is already in the set.\n", data);
-            return;
+            return FALSE;
         }
 
     string_queue_append(queue, data);
+    return TRUE;
 }
 
 typedef struct _container_context container_context;
@@ -354,6 +355,7 @@ static void save_subscriber_names(container_context *ctx, sp_playlist *playlist)
     sp_subscribers *subscribers = sp_playlist_subscribers(playlist);
     unsigned int i;
     sp_user *owner = NULL;
+    const char *owner_name = NULL;
 
     if (ctx->depth >= ctx->allowable_depth)
     {
@@ -362,7 +364,13 @@ static void save_subscriber_names(container_context *ctx, sp_playlist *playlist)
     }
 
     owner = sp_playlist_owner (playlist);
-    string_queue_add_to_set(ctx->users, sp_user_canonical_name(owner));
+    owner_name = sp_user_canonical_name(owner);
+
+    if (!string_queue_add_to_set(ctx->users, owner_name) &&
+        strcmp(owner_name, ctx->users->first->data) != 0 &&
+        strcmp(owner_name, ctx->users->last->data) != 0
+        /* && name not in ctx->name*/)
+        printf("%s belongs to a user that we already have a playlist for.\n", sp_playlist_name(playlist));
 
     for (i = 0; i < subscribers->count; i++)
     {
