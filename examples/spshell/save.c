@@ -246,6 +246,7 @@ static container_context *container_context_new(
     void *user_data)
 {
   container_context *ctx = malloc(sizeof(container_context));
+  sp_playlistcontainer_add_ref(pc);
   ctx->pc = pc;
   ctx->name = _strdup(name);
   ctx->parent = parent;
@@ -285,6 +286,7 @@ static void container_context_add_finally(
 
 static void container_context_free(container_context *ctx) {
   sp_playlistcontainer_remove_callbacks(ctx->pc, ctx->callbacks, ctx);
+  sp_playlistcontainer_release(ctx->pc);
   free(ctx->callbacks);
   free(ctx->name);
   free(ctx);
@@ -448,6 +450,7 @@ static void save_next_user(container_context *parent_ctx, string_list *next)
     }
 
     child_ctx = container_context_new(pc, user_folder_name, parent_ctx, l->next);
+    container_context_start_call(child_ctx);
 
     if (sp_playlistcontainer_is_loaded(pc)) {
         container_loaded(pc, container_context_start_call(child_ctx));
@@ -457,6 +460,7 @@ static void save_next_user(container_context *parent_ctx, string_list *next)
             container_context_start_call(child_ctx));
     }
     container_context_add_finally(child_ctx, child_context_finally);
+    container_context_finish_call(child_ctx);
     return;
 
     finally:
